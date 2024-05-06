@@ -1,4 +1,7 @@
 # Byte-compiled / optimized / DLL files
+outputs/
+slurm_logs/
+pasteur/
 __pycache__/
 *.py[cod]
 *$py.class
