@@ -43,7 +43,7 @@ Interested in contributing? Check out the contributing guidelines. Please note t
 ## License
 
 `evlm` was created by Alejandro Lozano. It is licensed under the terms of the MIT license.
-
+`evlm` was created with [`cookiecutter`](https://cookiecutter.readthedocs.io/en/latest/) and the `py-pkgs-cookiecutter` [template](https://github.com/py-pkgs/py-pkgs-cookiecutter).
 
 If you find this repo useful make sure to cite it:
 ```
@@ -52,6 +52,7 @@ If you find this repo useful make sure to cite it:
   author={Alejandro Lozano},
   booktitle={Github},
   year={2024}
-}```
+}
+```
 
-`evlm` was created with [`cookiecutter`](https://cookiecutter.readthedocs.io/en/latest/) and the `py-pkgs-cookiecutter` [template](https://github.com/py-pkgs/py-pkgs-cookiecutter).
+
