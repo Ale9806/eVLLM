@@ -11,8 +11,8 @@ sys.path.append(module_path)
 
 from torch.utils.data import DataLoader
 
-from dataloaders.json_loader import JsonDataset,collate_fn
-import clip_inference
+from dataloaders.dataframe_loaders import PandasDataframe,collate_fn,create_dataframe
+import clip_inference_chexpert as clip_inference
 import generative_inference
 
 
@@ -43,7 +43,7 @@ def main():
     parser.add_argument('--model',        type=str,                        help='Name of model')
     parser.add_argument('--split',      type=str,  default='validation', help='Dataset split to evaluate (default is "validation")')
     parser.add_argument('--transform',  type=str,  default=None,         help='Data transformation function')
-    parser.add_argument('--output_dir', type=str,  default='outputs',    help='Output directory to save evaluation results (default is "outputs")')
+    parser.add_argument('--output_dir', type=str,  default='outputs_ct',    help='Output directory to save evaluation results (default is "outputs")')
     parser.add_argument('--DEBUG',      action='store_true',             help='Flag to enable debug mode')
     parser.add_argument('--data_root',  type=str,  default='/pasteur/data/jnirschl/datasets/biovlmdata/data/processed/', help='Dataset split to evaluate (default is "validation")')
     
@@ -75,49 +75,48 @@ def main():
 
     output_dir = Path(args.output_dir)
 
-  
+   
 
+    dataset_dict = {}
+    #dataset_dict["data_root"] = args.data_root
+    #dataset_dict["data_name"] =  datasets_ #"jung_et_al_2022" #args.data_name
+    #dataset_dict["split"]     = args.split
+    class_names:list[str] = ['Atelectasis', 'Cardiomegaly', 'Consolidation', 'Edema', 'Pleural Effusion']
+    path_name:str         ='Path'
+
+    data_root:str  = "/pasteur/data/chexpert_small/CheXpert-v1.0-small"
+    split_root:str = "valid"
 
     
-   
-    DATASETS = ['acevedo_et_al_2020', 'eulenberg_et_al_2017_darkfield',
-    'eulenberg_et_al_2017_epifluorescence', 'icpr2020_pollen',
-    'nirschl_et_al_2018', 'jung_et_al_2022', 'wong_et_al_2022',
-    'hussain_et_al_2019', 'colocalization_benchmark', 'kather_et_al_2016',
-    'tang_et_al_2019', 'eulenberg_et_al_2017_brightfield',
-    'burgess_et_al_2024_contour', 'nirschl_unpub_fluorescence',
-    'burgess_et_al_2024_eccentricity', 'burgess_et_al_2024_texture',
-    'held_et_al_2010']
+    df_class = create_dataframe(data_root,split_root)
+    dataset_dict["dataset"] = PandasDataframe(df_class,class_names,path_name,convert_class_to_str=True)
+    dataset_dict["loader"]  = DataLoader( dataset_dict["dataset"], batch_size=16, shuffle=True, collate_fn=collate_fn)
+    #import pdb;pdb.set_trace()
 
-    for datasets_ in DATASETS:
-        dataset_dict = {}
-        dataset_dict["data_path"] = Path(args.data_root) /datasets_ 
-        dataset_dict["dataset"] =  JsonDataset(dataset_path = dataset_dict["data_path"],split=args.split, limit=100)
-        dataset_dict["loader"]  =  dataset_dict["dataset"] #DataLoader(dataset, batch_size=1, collate_fn=collate_fn)
-        try:
-            if model_type == "ENCODER":
-                clip_inference.evaluate_dataset(
-                    dataset = dataset_dict, 
-                    model_dict = model_dict, 
-                    split = args.split, 
-                    transform = args.transform, 
-                    output_dir = output_dir, 
-                    DEBUG = args.DEBUG)
+    try:
+        if model_type == "ENCODER":
+            clip_inference.evaluate_dataset(
+                dataset = dataset_dict, 
+                model_dict = model_dict, 
+                split = args.split, 
+                transform = args.transform, 
+                output_dir = output_dir, 
+                DEBUG = args.DEBUG)
 
-            elif model_type == "GENERATIVE":
-                generative_inference.evaluate_dataset(
-                    dataset = dataset_dict, 
-                    model_dict = model_dict, 
-                    split = args.split, 
-                    transform = args.transform, 
-                    output_dir = output_dir,
-                    question_key  = "questions",
-                    DEBUG = args.DEBUG)
+        elif model_type == "GENERATIVE":
+            generative_inference.evaluate_dataset(
+                dataset = dataset_dict, 
+                model_dict = model_dict, 
+                split = args.split, 
+                transform = args.transform, 
+                output_dir = output_dir,
+                question_key  = "questions",
+                DEBUG = args.DEBUG)
 
 
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            print(f"Could not evaluate {datasets_}")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        print(f"Could not evaluate {datasets_}")
 
 if __name__ == "__main__":
     main()
@@ -125,20 +124,20 @@ if __name__ == "__main__":
 ## Example Usage:
 # Enmbedding  (contrastive) Models:
 ## Base enviorment:
-#python src/evlm/infernece/clip_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model ALIGN
-#python src/evlm/infernece/clip_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model BioMedCLIP
-#python src/evlm/infernece/clip_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model OpenCLIP
-#python src/evlm/infernece/clip_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model QuiltCLIP
-#python src/evlm/infernece/clip_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model PLIP
-#python src/evlm/infernece/clip_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model BLIP
+#python src/evlm/infernece/clip_inference_chexpert_wrapper.py  --model ALIGN
+#python src/evlm/infernece/clip_inference_chexpert_wrapper.py  --model BioMedCLIP
+#python src/evlm/infernece/clip_inference_chexpert_wrapper.py  --model OpenCLIP
+#python src/evlm/infernece/clip_inference_chexpert_wrapper.py  --model QuiltCLIP
+#python src/evlm/infernece/clip_inference_chexpert_wrapper.py  --model PLIP
+#python src/evlm/infernece/clip_inference_chexpert_wrapper.py  --model BLIP
 
-#python src/evlm/infernece/clip_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model OwlVIT2
-#python src/evlm/infernece/clip_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model BLIP2
+#python src/evlm/infernece/clip_inference_chexpert_wrapper.py  --model OwlVIT2
+#python src/evlm/infernece/clip_inference_chexpert_wrapper.py  --model BLIP2
 
 # Conch Enviorment:
-#python src/evlm/infernece/clip_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model ConchCLIP
+#python src/evlm/infernece/clip_inference_wrapper.py  --model ConchCLIP
 
 
 ## Base enviorment:
-#python src/evlm/infernece/clip_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model CogVLM
-#python src/evlm/infernece/clip_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model QwenVLM
+#python src/evlm/infernece/clip_inference_wrapper.py  --model CogVLM
+#python src/evlm/infernece/clip_inference_wrapper.py  --model QwenVLM

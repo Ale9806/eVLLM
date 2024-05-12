@@ -77,7 +77,7 @@ for model in models:
 
 
     df = pd.concat(dfs, ignore_index=True)
-    import pdb;pdb.set_trace()
+    #import pdb;pdb.set_trace()
 
     if model in ["CogVLM","QwenVLM"]:
        #import pdb;pdb.set_trace()

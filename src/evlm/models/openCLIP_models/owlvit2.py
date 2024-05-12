@@ -31,8 +31,9 @@ class OwlVIT2(BaseCLIP):
         """
         output:dict     = {}
         processed_images = self.preprocess_image(images, return_tensors ="pil")
-        target_sizes      = torch.Tensor([ image.size[::-1] for image in processed_images])
+        target_sizes      = torch.Tensor([ image.size[::-1] for image in processed_images]).to(self.device)
         with torch.no_grad():
+            #import pdb;pdb.set_trace()
             inputs  = self.preprocess(text=texts, images=processed_images, return_tensors="pt", padding=True).to(self.device)
             outputs = self.model(**inputs)
             results = self.preprocess.post_process_object_detection(outputs=outputs, target_sizes=target_sizes, threshold=0.1)
@@ -46,7 +47,7 @@ class OwlVIT2(BaseCLIP):
                 output["bbox"].append(result["boxes"].to("cpu").tolist())
 
             output = self.handle_output(output,texts) 
-        import pdb;pdb.set_trace()
+        #import pdb;pdb.set_trace()
         return output
 
 if __name__ == "__main__":
