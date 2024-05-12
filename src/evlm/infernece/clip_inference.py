@@ -9,6 +9,7 @@ from pathlib import Path
 from utils  import save_output
 import random
 
+QUESTIONS = ['modality', 'submodality', 'domain', 'subdomain' , 'stain', 'classification']
 def evaluate_dataset( dataset:dict, 
                        model_dict:dict[str,str], 
                        split:str,
@@ -17,10 +18,8 @@ def evaluate_dataset( dataset:dict,
                        question_key:str = "captions",
                        DEBUG:bool=False) -> None:
 
-
     output_name = output_dir / model_dict['name'] / dataset["dataset"].name
     results = []
-    
     for j, data_point in enumerate(tqdm( dataset["loader"], desc=f"Evaluating  {dataset['dataset'].name} | model:{model_dict['name']}")):
         questions:dict[str,str] = data_point['custom_metadata'][question_key]
         image_id:str = data_point["metadata"]['name']
@@ -29,18 +28,16 @@ def evaluate_dataset( dataset:dict,
         
         meta_data:list[str] = ['microns_per_pixel',"domain","subdomain","modality","submodality","normal_or_abnormal"]
         for key in meta_data:
-            sub_results[key] = data_point["custom_metadata"][key]
-
-     
-
-        for question_class in questions.keys():
+            sub_results[key] = data_point["custom_metadata"].get(key,"none")
+          
+        for question_class in QUESTIONS:
             
             result:dict  = {}
             question = questions[question_class]["question"]
             answer   = questions[question_class]["answer"]
             options  = questions[question_class]["options"]
             
-            assert answer in options 
+            assert answer in options,f"answer not in options: {answer} not in {options}"
             position = options.index(answer)
 
             
@@ -80,4 +77,6 @@ def evaluate_dataset( dataset:dict,
                 break
 
     save_output(results, output_name)
-
+    #except Exception as e:
+    ##    print(f"Could not run datast :I, error {e}")
+     #   import pdb;pdb.set_trace()

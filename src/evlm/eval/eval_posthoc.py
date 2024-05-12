@@ -4,9 +4,39 @@ import pandas as pd
 import os
 
 def extract_top_k_element(cell_value,k=1):
+    """
+    Extracts the top k elements from a list-like string representation.
+
+    Parameters:
+    cell_value (str): A string representing a list of elements.
+    k (int, optional): The number of top elements to extract. Defaults to 1.
+
+    Returns:
+    list: A list containing the top k elements from the input.
+
+    Examples:
+    >>> extract_top_k_element('[1, 2, 3, 4, 5]', 3)
+    [1, 2, 3]
+    """
     return eval(cell_value)[0:k]
 
 def is_correct(correct_answer, top_k):
+    """
+    Checks if the correct answer is among the top k elements.
+
+    Parameters:
+    correct_answer: The correct answer to be checked.
+    top_k: A list of top k elements.
+
+    Returns:
+    int: 1 if the correct answer is among the top k, otherwise 0.
+
+    Examples:
+    >>> is_correct(3, [1, 2, 3, 4, 5])
+    1
+    >>> is_correct(6, [1, 2, 3, 4, 5])
+    0
+    """
     return 1 if correct_answer in top_k else 0
 
 def save_table_to_latex_and_csv(
@@ -48,9 +78,54 @@ def check_prediction(row):
     else:
         return False
 
-    
+def get_results(df,model):
+    if model in ["CogVLM","QwenVLM"]:
+       #import pdb;pdb.set_trace()
+        df["prediction"] = df.apply(lambda row: eval(row["model_answers"])["text"].lower() , axis=1)
+        df["correct_answer"] = df["correct_answer"].str.lower()
+        df['is_correct'] = df.apply(check_prediction, axis=1)
+
+    else: 
+        df["prediction"] = df.apply(lambda row: eval(row["model_answers"])["pred"][0] , axis=1)
+        df["is_correct"] = 1*(df["correct_idx"] == df["prediction"]) 
+
+
+def concat_data(models: list[str], datasets: list[str], extension: str = ".csv") -> pd.DataFrame:
+    """
+    Concatenates data from multiple models and datasets into a single DataFrame.
+
+    Parameters:
+        models (List[str]): A list of model names.
+        datasets (List[str]): A list of dataset names.
+        extension (str, optional): The file extension of the data files. Default is ".csv".
+
+    Returns:
+        Optional[pd.DataFrame]: A DataFrame containing concatenated data if available, otherwise None.
+    """
+    dfs_list = []
+    for model in models:
+        dfs = []
+        for dataset in datasets: 
+            data_path = pathlib.Path("outputs", model, dataset + extension)
+            if os.path.exists(data_path):
+                sub_df = pd.read_csv(data_path)
+                dfs.append(sub_df)
+            else:
+                print(f"No results for {dataset}")
+        if dfs:
+            df = pd.concat(dfs, ignore_index=True)
+            dfs_list.append(df)
+
+    if dfs_list:
+        result_df = pd.concat(dfs_list, ignore_index=True)
+        return result_df
+    else:
+        return None
+
+
 round_to           = 3
 models:list[str]   = ["ALIGN","BLIP","OpenCLIP","BioMedCLIP","ConchCLIP","PLIP","QuiltCLIP","CogVLM","QwenVLM"]
+models:list[str]   = ["ALIGN","BLIP","OpenCLIP","BioMedCLIP"]
 datasets:list[str] =[
     'acevedo_et_al_2020', 'eulenberg_et_al_2017_darkfield',
     'eulenberg_et_al_2017_epifluorescence', 'icpr2020_pollen',
@@ -78,16 +153,7 @@ for model in models:
 
     df = pd.concat(dfs, ignore_index=True)
     #import pdb;pdb.set_trace()
-
-    if model in ["CogVLM","QwenVLM"]:
-       #import pdb;pdb.set_trace()
-        df["prediction"] = df.apply(lambda row: eval(row["model_answers"])["text"].lower() , axis=1)
-        df["correct_answer"] = df["correct_answer"].str.lower()
-        df['is_correct'] = df.apply(check_prediction, axis=1)
-
-    else: 
-        df["prediction"] = df.apply(lambda row: eval(row["model_answers"])["pred"][0] , axis=1)
-        df["is_correct"] = 1*(df["correct_idx"] == df["prediction"]) 
+    get_results(df,model)
 
    
     result           = df.groupby("question_class")["is_correct"].mean().round(round_to).to_dict()
@@ -99,9 +165,6 @@ for model in models:
         result[key] = f"{result[key]} ({result_std[key]})"
 
     result["model"]         = model
-
-  
-    
     results.append(result)
 
 df_result = pd.DataFrame(results)
