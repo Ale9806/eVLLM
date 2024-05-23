@@ -10,7 +10,7 @@ class BaseVLLM(ABC):
         context_length (int, optional): Length of input context. Defaults to 256.
     """
 
-    def __init__(self,eval_mode:bool=True,context_length:int=256,verbose:bool=True):
+    def __init__(self,eval_mode:bool=True,context_length:int=256,verbose:bool=True,max_new_tokens:int=20):
         """
         Initialize the Model object.
 
@@ -25,6 +25,7 @@ class BaseVLLM(ABC):
         self.context_length:int = context_length
         self.eval:bool = eval_mode
         self.verbose:bool = verbose
+        self.max_new_tokens:int = max_new_tokens
 
         if self.verbose:
           print()
@@ -99,7 +100,7 @@ class BaseVLLM(ABC):
             image = Image.open(image)
         return image
 
-    def handle_output(self,output:dict[str,torch.Tensor],prompts:list[str]= None) -> dict[str,list[int | str]]:
+    def handle_output(self,output:dict[str,torch.Tensor],prompt:str) -> dict[str,list[int | str]]:
         """
         Process the output dictionary.
 
@@ -114,17 +115,11 @@ class BaseVLLM(ABC):
         - The function converts tensor values in the output dictionary to lists.
         - If prompts are provided, it adds a "pred_prompt" key to the output, which maps indices from the "pred" key to the corresponding prompts.
         """
-        for keys, values in output.items():
-                output[keys] = values.tolist()
-
-        if prompts:
-            output["pred_prompt"]  = [None]*len(output["pred"])
-            for i,value in enumerate(output["pred"]):
-                output["pred_prompt"][i] = prompts[value]
-            
+        prompt_length = len(prompt)
+        if output["text"].startswith(prompt):
+            output["text"] = output["text"][prompt_length:].strip()
         return output
-
-
+            
     @abstractmethod
     def forward(self,images, texts, return_probs:bool=True) -> dict[str,torch.Tensor]:
         """

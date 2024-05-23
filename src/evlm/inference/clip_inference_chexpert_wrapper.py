@@ -32,7 +32,7 @@ def evaluate_dataset_wrapper(dataset_name, model_dict, split="validation", trans
 
     evaluate_dataset( dataset_name,
                       model_dict  = model_dict, 
-                      split       = "validation",
+                      split       = "test",
                       transform   = transform,
                       output_dir  = Path("outputs"),
                       DEBUG       =  DEBUG) 
@@ -53,7 +53,6 @@ def main():
 
     if args.model not in ["ALIGN","QuiltCLIP","OwlVIT2","OpenCLIP","BLIP2","BLIP","PLIP","BioMedCLIP","ConchCLIP","CogVLM","QwenVLM"]:
         raise f"There is no support for model {args.model}"
-
 
 
     if args.model  in ["ALIGN","QuiltCLIP","OwlVIT2","OpenCLIP","BLIP2","BLIP","PLIP","BioMedCLIP","ConchCLIP"]:

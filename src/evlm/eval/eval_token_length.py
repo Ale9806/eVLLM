@@ -9,6 +9,7 @@ module_path = str(Path(__file__).resolve().parent)
 sys.path.append(module_path)
 
 from eval_utils import *
+from plot_utils import *
 
 def process_models(
     models: list[str], 
@@ -30,9 +31,8 @@ def process_models(
         List[Dict[str, Any]]: A list of dictionaries containing evaluation results for each model.
     """
     results = []
-
+    dfs = []
     for model in models:
-        dfs = []
         for dataset in datasets:
             append = True
             data_path = pathlib.Path("outputs", model, dataset + extension)
@@ -45,40 +45,56 @@ def process_models(
                 
                 if append:
                     print(f"added {dataset}")
+                    sub_df["model"] = model
                     dfs.append(sub_df)
 
             else:
                 print(f"No results for {dataset}")
-            #import pdb;pdb.set_trace()
+
         df = pd.concat(dfs, ignore_index=True)
-        
+        df["char_length"] = df["correct_answer"].apply(len)
+        df['confidence']  = df.apply(get_confidence, axis=1)
         get_results(df, model)
 
-        result = df.groupby("question_class")["is_correct"].mean().round(round_to).to_dict()
-        result["dataset_total"] = df["is_correct"].mean().round(round_to)
-        result_std = df.groupby("question_class")["is_correct"].sem().round(round_to).to_dict()
-        result_std["dataset_total"] = df["is_correct"].sem().round(round_to)
+        #df  = df.groupby('question_class')["is_correct"].mean().round(round_to).reset_index()
+        #accuracy_df = df.groupby('question_class')[["is_correct",'confidence']].mean().round(round_to).reset_index()
+        for model in df["model"].unique():
+            specific_model = df[df["model"]==model]
+            plot_length_confidence(specific_model,f"{model}_length_confidence",model=model)
+            plot_histogram(specific_model,f"{model}_confidence_histogram",model=model)
+            plot_calibration(df,f"{model}_confidence_correctnes_correlation")
 
-        for key, value in result.items():
-            result[key] = f"{result[key]} ({result_std[key]})"
+        scenarios = [["classification_0"], ["classification_1"], ['modality', 'submodality', 'domain', 'subdomain', 'stain']]
 
-        result["model"] = model
-        results.append(result)
+        for scenario in scenarios:
+            temp_df = df[df["question_class"].isin(scenario)]
+            temp_df['char_length_bin'] = pd.qcut(temp_df['char_length'], q=4)
+            mean_is_correct_per_model_bin = temp_df.groupby(['model', 'char_length_bin'])['is_correct'].mean().reset_index()
+            std_is_correct_per_model_bin = temp_df.groupby(['model', 'char_length_bin'])['is_correct'].std().reset_index()
+
+            std_is_correct_per_model_bin  = std_is_correct_per_model_bin.round(2)
+            mean_is_correct_per_model_bin = mean_is_correct_per_model_bin.round(2)
+            mean_std_is_correct_per_model_bin = mean_is_correct_per_model_bin.merge(std_is_correct_per_model_bin,on=['model', 'char_length_bin'], suffixes=('_mean', '_std'))
+            mean_std_is_correct_per_model_bin['is_correct_ms'] = mean_std_is_correct_per_model_bin.apply(lambda row: f"{row['is_correct_mean']} ({row['is_correct_std']})",axis=1)
+            pivot_df = mean_std_is_correct_per_model_bin.pivot_table(index='char_length_bin', columns='model', values='is_correct_ms', aggfunc=','.join).reset_index()
+            save_table_to_latex_and_csv(pivot_df,Path(f"outputs/tables/{ '_'.join(scenario)}"))
+
+    import pdb;pdb.set_trace()
 
     return results
 
 
-def process_models_question_only(
+
+
+
+def accuracy_confidence_regression(
     models: list[str], 
     datasets: list[str], 
     round_to: int = 2, 
     extension: str = ".csv",
-    filter_dict:dict[str,list]=None,
-    tasks_metadata:dict[str,dict]=None,
-    to_percentage:bool=False) -> list[dict[str]]:
-    
+    filter_dict:dict[str,list]=None) -> list[dict[str]]:
     """
-    Used to evaluate instance classifcation
+    Used to identify instance indentification
     Process data from multiple models and datasets and calculate evaluation metrics.
 
     Parameters:
@@ -90,15 +106,9 @@ def process_models_question_only(
     Returns:
         List[Dict[str, Any]]: A list of dictionaries containing evaluation results for each model.
     """
-    if to_percentage:
-        multiplier = 100
-    else:
-        multiplier = 1
-
     results = []
     dfs = []
     for model in models:
-        result = {}
         for dataset in datasets:
             append = True
             data_path = pathlib.Path("outputs", model, dataset + extension)
@@ -111,53 +121,31 @@ def process_models_question_only(
                 
                 if append:
                     print(f"added {dataset}")
-                    sub_df,_ = filter_dataset(sub_df,{"question_class":["classification"]})
+                    sub_df["model"]    = model
                     sub_df["dataset"] = dataset
-                    sub_df["model"]   = model
-                    #import pdb;pdb.set_trace()
-                    get_results(sub_df, model)
-
-                    result_mean:dict[str,int] = sub_df.groupby("question_class")["is_correct"].mean().to_dict()
-                    result_std:dict[str,int] = sub_df.groupby("question_class")["is_correct"].sem().to_dict()
-                    
-                    result =  {"model":model, "dataset":dataset,"accuracy":f"{np.round(result_mean['classification']*multiplier,round_to)} ({np.round(result_std['classification']*multiplier,round_to)})"}
-                    results.append(result)
                     dfs.append(sub_df)
+
             else:
                 print(f"No results for {dataset}")
 
-           
-            #import pdb;pdb.set_trace()
+            
 
-    df_total = pd.concat(dfs, ignore_index=True)
-    #df_total = df_total["is_correct"].mean().round(round_to)
-    
-    df_total_mean = df_total.groupby("model")["is_correct"].mean().round(round_to).reset_index()
-    df_total_std  = df_total.groupby("model")["is_correct"].sem().round(round_to).reset_index()
-    total_results = []
-    for (_, row ),(_, row2 )in zip(df_total_mean.iterrows(),df_total_std.iterrows()):
-        result =  {"model":row["model"], "dataset":"Total","accuracy":f"{np.round(row['is_correct']*multiplier,round_to)} ({np.round(row2['is_correct']*multiplier,round_to)})"}
-        total_results.append(result)
+        df = pd.concat(dfs, ignore_index=True)
+        df["char_length"] = df["correct_answer"].apply(len)
+        df['confidence']  = df.apply(get_confidence, axis=1)
+        get_results(df, model)
 
-    df_total = pd.DataFrame(total_results)
-    df = pd.DataFrame(results)
 
-    if tasks_metadata:
-        for index, row in df.iterrows():
-            dataset_name = row['dataset']
-            metadata = tasks_metadata.get(dataset_name, {})
-            for key, value in metadata.items():
-                df.at[index, f'{key}_metadata'] = value
+        #df["question_class"]  == classification_0
+        #df["dataset"]  =  df["question_class"] 
+        df.loc[df["question_class"] == "classification_0", "question_class"] = df.loc[df["question_class"] == "classification_0", "dataset"]
+        plot_calibration(df,f"{model}_confidence_correctnes_correlation")
+       
+        #accuracy_df = df.groupby('question_class')[["is_correct",'confidence']].mean().round(round_to).reset_index()
+       
+    import pdb;pdb.set_trace()
 
-        pivot_df = df.pivot(index='task_name_metadata', columns='model', values=['accuracy'])
-
-    else:
-        pivot_df = df.pivot(index='dataset', columns='model', values=['accuracy'])
-
-    pivot_df.reset_index(inplace=True)
-    #import pdb;pdb.set_trace()
-    
-    return results,pivot_df
+    return results
 
 
 
@@ -167,7 +155,7 @@ if __name__ == "__main__":
     round_to           = 2
     models:list[str]   = ["ALIGN","BLIP","OpenCLIP","BioMedCLIP","ConchCLIP","PLIP","QuiltCLIP","CogVLM","QwenVLM"]
     models:list[str]   = ["ALIGN","BLIP","OpenCLIP","BioMedCLIP","QuiltCLIP","PLIP","ConchCLIP"]
-
+    #models:list[str]   = ["ALIGN","BLIP","ConchCLIP"]
     tasks_metadata = {
         "acevedo_et_al_2020":{"task_name":"White blood cell","synthetic":False,"num_classes": 8},
         "burgess_et_al_2024_contour":{"task_name":"Cell contour","synthetic":True,"num_classes": 3},
@@ -187,14 +175,7 @@ if __name__ == "__main__":
         "tang_et_al_2019":{"task_name":"amyloid beta morphology patterns (a)","synthetic":False,"num_classes": 4},
         "wong_et_al_2022":{"task_name":"amyloid beta morphology patterns (b)","synthetic":False,"num_classes": 4},
         }
-    datasets:list[str] =['acevedo_et_al_2020', 'eulenberg_et_al_2017_darkfield',
-        'eulenberg_et_al_2017_epifluorescence', 'icpr2020_pollen',
-        'nirschl_et_al_2018', 'jung_et_al_2022', 'wong_et_al_2022',
-        'hussain_et_al_2019', 'colocalization_benchmark', 'kather_et_al_2016',
-        'tang_et_al_2019', 'eulenberg_et_al_2017_brightfield',
-        'burgess_et_al_2024_contour', 'nirschl_unpub_fluorescence',
-        'burgess_et_al_2024_eccentricity', 'burgess_et_al_2024_texture',
-        'held_et_al_2010']
+    datasets:list[str] = tasks_metadata.keys()
 
     
     extension:str = ".csv"
@@ -206,26 +187,11 @@ if __name__ == "__main__":
   
     output_path:str    = pathlib.Path("outputs","tables",filenmae )
 
-    results = process_models(models=models, 
+    results = accuracy_confidence_regression(models=models, 
                              datasets=datasets,
                              filter_dict = filter_dict)
 
    
-    df_result = pd.DataFrame(results)
-    model_column = df_result['model']
-    df_result.drop(columns=['model'], inplace=True)
-    df_result.insert(0, 'model', model_column)
-    save_table_to_latex_and_csv(df_result,output_path)
-
-    output_path:str    = pathlib.Path("outputs","tables",filenmae + "classification" )
-    results,pivot_df = process_models_question_only(
-        models=models,
-        datasets=datasets,
-        filter_dict = filter_dict,
-        tasks_metadata =tasks_metadata)
-    save_table_to_latex_and_csv(pivot_df,output_path)
-
-
     import pdb; pdb.set_trace()
 
 

@@ -17,10 +17,11 @@ DATASETS:list[str] = ['acevedo_et_al_2020', 'eulenberg_et_al_2017_darkfield',
     'burgess_et_al_2024_eccentricity', 
     'burgess_et_al_2024_texture']
 
-DATASETS:list[str] = ['hussain_et_al_2019','tang_et_al_2019','icpr2020_pollen']
+#DATASETS:list[str] = ['hussain_et_al_2019','tang_et_al_2019','icpr2020_pollen']
 
-CLIP_MODELS:list[str] = ["ALIGN","QuiltCLIP","OwlVIT2","OpenCLIP","BLIP2","BLIP","PLIP","BioMedCLIP","ConchCLIP"]
-CHAT_MODELS:list[str] = ["CogVLM","QwenVLM"]
+CLIP_MODELS:list[str] = ["ALIGN","CLIP","BLIP","OpenCLIP","QuiltCLIP","OwlVIT2","PLIP","BioMedCLIP","ConchCLIP"]
+#CLIP_MODELS:list[str] = ["BLIP","PLIP","ConchCLIP"]
+CHAT_MODELS:list[str] = ["CogVLM","QwenVLM","Kosmos2","BLIP2"]
 
-ALL_MODELS :list[str] = ["ALIGN","QuiltCLIP","OwlVIT2","OpenCLIP","BLIP2","BLIP","PLIP","BioMedCLIP","CogVLM","QwenVLM","ConchCLIP"]
+ALL_MODELS: list[str] = CLIP_MODELS + CHAT_MODELS
 QUESTIONS = ['modality', 'submodality', 'domain', 'subdomain' , 'stain', 'classification']

@@ -6,10 +6,10 @@ import numpy as np
 from tqdm import tqdm
 from pathlib import Path
 
-from utils  import save_output
+from utils  import save_output,init_sub_results
 import random
 
-QUESTIONS = ['modality', 'submodality', 'domain', 'subdomain' , 'stain', 'classification']
+#QUESTIONS = ['modality', 'submodality', 'domain', 'subdomain' , 'stain', 'classification']
 def evaluate_dataset( dataset:dict, 
                        model_dict:dict[str,str], 
                        split:str,
@@ -17,54 +17,51 @@ def evaluate_dataset( dataset:dict,
                        output_dir,
                        question_key:str = "captions",
                        DEBUG:bool=False) -> None:
+    """
+    Evaluates a dataset using a given model.
+
+    Parameters:
+    dataset (dict): The dataset to be evaluated.
+    model_dict (dict[str, str]): Dictionary containing model information.
+    split (str): Split of the dataset (e.g., train, test).
+    transform: Transformation function for the dataset.
+    output_dir: Directory to save the output.
+    DEBUG (bool): Whether to run in debug mode. Default is False.
+
+    Returns:
+    None
+    """
 
     output_name = output_dir / model_dict['name'] / dataset["dataset"].name
     results = []
     for j, data_point in enumerate(tqdm( dataset["loader"], desc=f"Evaluating  {dataset['dataset'].name} | model:{model_dict['name']}")):
         questions:dict[str,str] = data_point['custom_metadata'][question_key]
         image_id:str = data_point["metadata"]['name']
-        image:Path   = dataset['dataset'].path /image_id
-        sub_results = {}
+        image:Path = dataset['dataset'].path / dataset['dataset'].split / image_id
+        sub_results:dict[str,str] = init_sub_results(data_point)
         
-        meta_data:list[str] = ['microns_per_pixel',"domain","subdomain","modality","submodality","normal_or_abnormal"]
-        for key in meta_data:
-            sub_results[key] = data_point["custom_metadata"].get(key,"none")
           
-        for question_class in QUESTIONS:
-            
+        for question_class in questions.keys():
             result:dict  = {}
-            question = questions[question_class]["question"]
-            answer   = questions[question_class]["answer"]
-            options  = questions[question_class]["options"]
-            
+            question:str = questions[question_class]["question"]
+            answer:str   = questions[question_class]["answer"]
+            options:list[str] = questions[question_class]["options"]
+            position:int = options.index(answer)
+        
             assert answer in options,f"answer not in options: {answer} not in {options}"
-            position = options.index(answer)
-
             
             if question_key == "questions":
-                captions = [question + " " + option for option in options]
-
-            elif question_key == "captions":
-                captions = options
-
-            #import pdb;pdb.set_trace()
+                options = [question + " " + option for option in options]
+                
+            output:dict = model_dict["model"].forward(image,options)
 
             result["question_class"] = question_class
-            result["questions"]      = captions
+            result["questions"]      = options
             result["image_id"]       = image_id
             result["correct_answer"] = answer
             result["correct_idx"]    = position
-            output:dict         = model_dict["model"].forward(image,captions)
-            result["model_answers"] = output
-            
+            result["model_answers"]  = output
 
-            if model_dict["name"] == "random":
-                result = dict()
-                model_answers = options.copy()
-                random.shuffle(model_answers) 
-                result["model_answers"] = model_answers
-
-            
             for key in sub_results.keys():
                 result[key] = sub_results[key]
 
@@ -77,6 +74,6 @@ def evaluate_dataset( dataset:dict,
                 break
 
     save_output(results, output_name)
-    #except Exception as e:
-    ##    print(f"Could not run datast :I, error {e}")
-     #   import pdb;pdb.set_trace()
+
+
+#image:Path   = dataset['dataset'].path /image_id
