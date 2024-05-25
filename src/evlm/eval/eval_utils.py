@@ -3,6 +3,7 @@ import ast
 import pandas as pd
 import os
 import numpy as np
+import json
 
 def extract_top_k_element(cell_value,k=1):
     """
@@ -71,6 +72,34 @@ def save_table_to_latex_and_csv(
     # Save DataFrame to CSV and LaTeX files
     dataset_metadata_df.to_csv(field_csv_path, index=False)
     dataset_metadata_df.to_latex(field_latex_path, index=False)
+
+
+def save_dict_to_json(
+    data: dict, 
+    name: str
+):
+    """Save dataset metadata to CSV and LaTeX files.
+
+    Parameters
+    ----------
+    json : pandas.DataFrame
+        DataFrame containing dataset metadata.
+    name : str, optional
+        Name prefix for the output files (default is "images_per_dataset").
+
+    Returns
+    -------
+    None
+    """
+    #import pdb;pdb.set_trace()
+    # Create directory if it doesn't exist
+
+    with open(f"{name}.json", 'w') as f:
+        json.dump(data, f)
+  
+
+  
+
 
 
 def check_prediction(row):

@@ -4,6 +4,7 @@ import ast
 import pandas as pd
 import os
 import numpy as np
+from scipy.stats import bootstrap
 
 module_path = str(Path(__file__).resolve().parent) 
 sys.path.append(module_path)
@@ -30,6 +31,7 @@ def process_models(
         List[Dict[str, Any]]: A list of dictionaries containing evaluation results for each model.
     """
     results = []
+    save_results = {}
 
     for model in models:
         dfs = []
@@ -44,28 +46,39 @@ def process_models(
                     sub_df, append = filter_dataset(sub_df,filter_dict)
                 
                 if append:
-                    print(f"added {dataset}")
+                    #print(f"added {dataset}")
                     dfs.append(sub_df)
 
             else:
                 print(f"No results for {dataset}")
-            #import pdb;pdb.set_trace()
+
         df = pd.concat(dfs, ignore_index=True)
-        
         get_results(df, model)
 
-        result = df.groupby("question_class")["is_correct"].mean().round(round_to).to_dict()
-        result["dataset_total"] = df["is_correct"].mean().round(round_to)
-        result_std = df.groupby("question_class")["is_correct"].sem().round(round_to).to_dict()
-        result_std["dataset_total"] = df["is_correct"].sem().round(round_to)
+        result = df.groupby("question_class")["is_correct"].mean().to_dict()
+        result["dataset_total"] = df["is_correct"].mean()
 
+
+        
         for key, value in result.items():
-            result[key] = f"{result[key]} ({result_std[key]})"
+            if key != 'dataset_total':
+                bstp = bootstrap((df[df["question_class"] == key]["is_correct"],), np.mean, confidence_level=0.95)
+            else:
+                bstp = bootstrap((df["is_correct"],), np.mean, confidence_level=0.95, vectorized=True, batch=100, method='basic')
 
+            ci_at_95 = np.abs(bstp.confidence_interval.high -   result[key])
+        
+            save_results[model] = {key:{"accuracy":result[key],"se":bstp.standard_error},"ci95":ci_at_95 }
+            result[key] = f"{np.round(result[key],2)} ({ci_at_95})"
+
+            #import pdb; pdb.set_trace()
+            
+    
         result["model"] = model
         results.append(result)
+   
 
-    return results
+    return results,save_results
 
 
 def process_models_question_only(
@@ -75,7 +88,8 @@ def process_models_question_only(
     extension: str = ".csv",
     filter_dict:dict[str,list]=None,
     tasks_metadata:dict[str,dict]=None,
-    to_percentage:bool=False) -> list[dict[str]]:
+    to_percentage:bool=False,
+    question_name:str="classification") -> list[dict[str]]:
     
     """
     Used to evaluate instance classifcation
@@ -111,16 +125,24 @@ def process_models_question_only(
                 
                 if append:
                     print(f"added {dataset}")
-                    sub_df,_ = filter_dataset(sub_df,{"question_class":["classification"]})
+                    sub_df,_ = filter_dataset(sub_df,{"question_class":[question_name]})
                     sub_df["dataset"] = dataset
                     sub_df["model"]   = model
                     #import pdb;pdb.set_trace()
                     get_results(sub_df, model)
 
                     result_mean:dict[str,int] = sub_df.groupby("question_class")["is_correct"].mean().to_dict()
-                    result_std:dict[str,int] = sub_df.groupby("question_class")["is_correct"].sem().to_dict()
+                    result_std:dict[str,int]  = sub_df.groupby("question_class")["is_correct"].sem().to_dict()
+
                     
-                    result =  {"model":model, "dataset":dataset,"accuracy":f"{np.round(result_mean['classification']*multiplier,round_to)} ({np.round(result_std['classification']*multiplier,round_to)})"}
+                    #import pdb;pdb.set_trace()
+                
+                    bstp = bootstrap((sub_df[sub_df["question_class"] == question_name]["is_correct"],), np.mean, confidence_level=0.95)
+                    ci_at_95 = np.abs(bstp.confidence_interval.high -  result_mean[question_name])
+              
+
+
+                    result =  {"model":model, "dataset":dataset,"accuracy":f"{np.round(result_mean[question_name]*multiplier,round_to)} ({ci_at_95})"}
                     results.append(result)
                     dfs.append(sub_df)
             else:
@@ -134,6 +156,7 @@ def process_models_question_only(
     
     df_total_mean = df_total.groupby("model")["is_correct"].mean().round(round_to).reset_index()
     df_total_std  = df_total.groupby("model")["is_correct"].sem().round(round_to).reset_index()
+
     total_results = []
     for (_, row ),(_, row2 )in zip(df_total_mean.iterrows(),df_total_std.iterrows()):
         result =  {"model":row["model"], "dataset":"Total","accuracy":f"{np.round(row['is_correct']*multiplier,round_to)} ({np.round(row2['is_correct']*multiplier,round_to)})"}
@@ -154,8 +177,8 @@ def process_models_question_only(
     else:
         pivot_df = df.pivot(index='dataset', columns='model', values=['accuracy'])
 
+    pivot_df = pivot_df.T
     pivot_df.reset_index(inplace=True)
-    #import pdb;pdb.set_trace()
     
     return results,pivot_df
 
@@ -206,7 +229,7 @@ if __name__ == "__main__":
   
     output_path:str    = pathlib.Path("outputs","tables",filenmae )
 
-    results = process_models(models=models, 
+    results,save_results = process_models(models=models, 
                              datasets=datasets,
                              filter_dict = filter_dict)
 
@@ -216,6 +239,7 @@ if __name__ == "__main__":
     df_result.drop(columns=['model'], inplace=True)
     df_result.insert(0, 'model', model_column)
     save_table_to_latex_and_csv(df_result,output_path)
+    save_dict_to_json(save_results,output_path)
 
     output_path:str    = pathlib.Path("outputs","tables",filenmae + "classification" )
     results,pivot_df = process_models_question_only(
