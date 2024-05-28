@@ -35,16 +35,28 @@ class CogVLM(BaseVLLM):
             'attention_mask': inputs['attention_mask'].unsqueeze(0).to(self.device ),
             'images': [[inputs['images'][0].to(self.device ).to(torch.bfloat16)]],
         }
-        gen_kwargs = {"max_length": self.context_length, "do_sample": False}
-
-      
+        gen_kwargs = {"max_length": self.context_length, "do_sample": False, 
+                "return_dict_in_generate":True, "output_scores":True}
 
         with torch.no_grad():
             outputs = self.model.generate(**inputs, **gen_kwargs)
-            outputs = outputs[:, inputs['input_ids'].shape[1]:]
+            generated_ids = outputs.sequences[:, inputs['input_ids'].shape[1]:]
+            output["text"] =  self.tokenizer.decode(generated_ids[0])
 
-            output["text"] =  self.tokenizer.decode(outputs[0])
-            return  output
+            # compute probs that first token was 'A', 'B', ..., 'F'
+            scores = outputs.scores
+            assert generated_ids.shape[1] == len(outputs.scores)
+            choices = ["A","B","C","D","E","F"]
+            ids_choices = [self.tokenizer.encode(s, add_special_tokens=False)[0] for s in choices]
+            probs = torch.softmax(scores[0][0], dim=0)
+            probs_choices_ = [probs[id_].item() for id_ in ids_choices]
+            output['probs_choices'] = dict(zip(choices, probs_choices_))
+            
+            # the 'confidence' is the prob for the first char. if it was not in `choices`, return nan.
+            output['confidence'] = output['probs_choices'].get(output['text'][0], torch.nan)
+
+        return output
+            
 
 if __name__ == "__main__":
     model = CogVLM()
