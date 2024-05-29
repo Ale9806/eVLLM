@@ -13,7 +13,6 @@ As I am working in the intersection of CS and Biomedical applications, this pack
 #### CLIP Style VLMs:
 * ALIGN      (General)
 * BLIP       (General)
-* BLIP2      (General)
 * OpenCLIP   (General)
 * OwlVIT     (General)
 * OwlVIT2    (General)
@@ -22,9 +21,11 @@ As I am working in the intersection of CS and Biomedical applications, this pack
 * Quilt      (Pathology)
 
 #### Generative Style VLMs:
-* InstructBlip   (General)
 * CogVLM         (General)
 * QwenChatModel  (General)
+* Kosmos2        (General)
+* Fuyu           (General)
+* InstructBlip   (General)
 
 
 ### Conch Enviorment: 
