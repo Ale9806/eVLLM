@@ -23,10 +23,10 @@ def main():
     parser.add_argument('--dataset_name', type=str,                     help='Name of the dataset to evaluate')
     parser.add_argument('--model',        type=str,                     help='Name of model to evaluate')
     parser.add_argument('--split',        type=str,  default='test',    help='Dataset split to evaluate (default is "test")')
-    parser.add_argument('--limit',        type=str,  default=None,      help='Limit of datapoints to evaluate (None evaluates everything )')
+    parser.add_argument('--limit',        type=str,  default=None,      help='Limit of data points to evaluate (None evaluates everything )')
     parser.add_argument('--transform',    type=str,  default=None,      help='Data transformation function')
     parser.add_argument('--output_dir',   type=str,  default='outputs', help='Output directory to save evaluation results (default is "outputs")')
-    parser.add_argument('--DEBUG',        action='store_true',          help='Flag to enable debug mode')
+    parser.add_argument('--DEBUG',        action='store_true',          help='Flag to enable debug mode (only run inference on first  2 points)')
     parser.add_argument('--data_root',    type=str,  default='/pasteur/data/jnirschl/datasets/biovlmdata/data/processed/', help='Dataset split to evaluate (default is "validation")')
     
     args:dict = parser.parse_args()
@@ -64,7 +64,14 @@ def main():
             dataset_dict["data_path"] = Path(args.data_root) /datasets_ 
             dataset_dict["dataset"] =  JsonlDataset(dataset_path = dataset_dict["data_path"],split=args.split, limit=args.limit)
             dataset_dict["loader"]  =  dataset_dict["dataset"] #DataLoader(dataset, batch_size=1, collate_fn=collate_fn)
-            do_inference(dataset_dict,model_dict,args,logger=logger)
+            #import pdb; pdb.set_trace()
+            output_file:str       = dataset_dict["dataset"].name + ".csv"
+            output_dir_name:Path = Path(args.output_dir) / model_dict['name'] / output_file
+            if output_dir_name.is_file():
+                print(f"results {output_file} have already been generated")
+            else:
+                print(f"Running Inference for {output_file}")
+                do_inference(dataset_dict,model_dict,args,logger=logger)
 
 
 
@@ -128,10 +135,15 @@ if __name__ == "__main__":
 # Conch Enviorment:
 #python src/evlm/inference/model_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model ConchCLIP
 
+#python src/evlm/inference/model_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model BioMedCLIP
+
 #python src/evlm/inference/model_inference_wrapper.py --dataset_name all --model ConchCLIP
+
 
 ## Base enviorment:
 #python src/evlm/inference/model_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model CogVLM
 #python src/evlm/inference/model_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model QwenVLM
 #python src/evlm/inference/model_inference_wrapper.py --dataset_name all --model gen
 
+
+#python src/evlm/inference/model_inference_wrapper.py --dataset_name "colocalization_benchmark" --model CogVLM

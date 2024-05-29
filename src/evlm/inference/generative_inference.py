@@ -32,6 +32,8 @@ def evaluate_dataset( dataset:dict,
     Returns:
     None
     """
+    #DEBUG = True
+
     output_name = output_dir / model_dict['name'] / dataset["dataset"].name
     results = []
     for j, data_point in enumerate(tqdm( dataset["loader"], desc=f"Evaluating  {dataset['dataset'].name} | model:{model_dict['name']}")):
@@ -66,7 +68,7 @@ def evaluate_dataset( dataset:dict,
 
         if DEBUG:
             if j == 2:
-                import pdb;pdb.set_trace()
+                #import pdb;pdb.set_trace()
                 break
                 
     save_output(results, output_name)

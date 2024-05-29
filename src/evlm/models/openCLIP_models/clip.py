@@ -32,7 +32,7 @@ class CLIP(BaseCLIP):
         processed_images = self.load_image(images)
 
         with torch.no_grad():
-            inputs = self.preprocess(text=texts, images=processed_images, return_tensors="pt", padding=True)
+            inputs = self.preprocess(text=texts, images=processed_images, return_tensors="pt", padding=True).to(self.device)
             outputs = self.model(**inputs)
             logits  =  outputs.logits_per_image 
             probs   = logits.softmax(dim=1)
