@@ -21,7 +21,7 @@ DATASETS:list[str] = ['acevedo_et_al_2020', 'eulenberg_et_al_2017_darkfield',
 
 CLIP_MODELS:list[str] = ["ALIGN","CLIP","BLIP","OpenCLIP","QuiltCLIP","OwlVIT2","PLIP","BioMedCLIP","ConchCLIP"]
 #CLIP_MODELS:list[str] = ["BLIP","PLIP","ConchCLIP"]
-CHAT_MODELS:list[str] = ["CogVLM","QwenVLM","Kosmos2","BLIP2"]
+CHAT_MODELS:list[str] = ["CogVLM","QwenVLM","Kosmos2","BLIP2","PaliGemma"]
 
 ALL_MODELS: list[str] = CLIP_MODELS + CHAT_MODELS
 QUESTIONS = ['modality', 'submodality', 'domain', 'subdomain' , 'stain', 'classification']

@@ -48,15 +48,27 @@ class PaliGemma(BaseVLLM):
         p_len  = inputs["input_ids"].shape[-1]
 
         with torch.inference_mode():
-            generation = self.model.generate(**inputs, max_new_tokens=self.max_new_tokens , do_sample=False)
-            generation = generation[0][p_len:]
-            decoded    = self.processor .decode(generation, skip_special_tokens=True)
-           
+            generation_output = self.model.generate(
+                **inputs,
+                max_new_tokens=self.max_new_tokens,
+                do_sample=False,
+                output_scores=True,
+                return_dict_in_generate=True
+            )
+        generation = generation_output.sequences[0][p_len:]
+        output["text"] = self.processor.decode(generation, skip_special_tokens=True)
 
-      
-            output["text"] =  decoded
+        # compute probs for A,B,C,D,E,F for the first token 
+        first_token_logits = generation_output.scores[0][0]
+        first_token_probs = torch.softmax(first_token_logits, dim=0)
+        choices = ["A","B","C","D","E","F"]
+        ids_choices = [self.processor.tokenizer.encode(s, add_special_tokens=False)[0] for s in choices]
+        output['probs_choices'] = dict(zip(choices, first_token_probs[ids_choices].cpu().numpy()))
 
-            return  output
+        # the 'confidence' is the prob for the first char. if it was not in `choices`, return nan.
+        output['confidence'] = output['probs_choices'].get(output['text'][0], torch.nan)
+
+        return  output
 
 if __name__ == "__main__":
     model = PaliGemma()
