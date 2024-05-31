@@ -154,26 +154,32 @@ if __name__ == "__main__":
 
     round_to           = 2
     models:list[str]   = ["ALIGN","BLIP","OpenCLIP","BioMedCLIP","ConchCLIP","PLIP","QuiltCLIP","CogVLM","QwenVLM"]
-    models:list[str]   = ["ALIGN","BLIP","OpenCLIP","BioMedCLIP","QuiltCLIP","PLIP","ConchCLIP"]
+    models:list[str] = ["ALIGN","BLIP","OpenCLIP","QuiltCLIP","PLIP","BioMedCLIP","ConchCLIP"]
     #models:list[str]   = ["ALIGN","BLIP","ConchCLIP"]
     tasks_metadata = {
-        "acevedo_et_al_2020":{"task_name":"White blood cell","synthetic":False,"num_classes": 8},
-        "burgess_et_al_2024_contour":{"task_name":"Cell contour","synthetic":True,"num_classes": 3},
-        "burgess_et_al_2024_eccentricity":{"task_name":"Cell eccentricity","synthetic":True,"num_classes": 3},
-        "burgess_et_al_2024_texture":{"task_name":"Cell texture","synthetic":True,"num_classes": 3},
+        "acevedo_et_al_2020":{"task_name":"White blood cell (BF)","synthetic":False,"num_classes": 8},
+        "burgess_et_al_2024_contour":{"task_name":"Cell contour (S)","synthetic":True,"num_classes": 3},
+        "burgess_et_al_2024_eccentricity":{"task_name":"Cell eccentricity (S)","synthetic":True,"num_classes": 3},
+        "burgess_et_al_2024_texture":{"task_name":"Cell texture","synthetic (S)":True,"num_classes": 3},
+        "empiar_sbfsem":{"task_name":"Organisms and structures in EM","synthetic":True,"num_classes": 5},
         "colocalization_benchmark":{"task_name":"Colocalization patterns","synthetic":True,"num_classes": 4},
-        "eulenberg_et_al_2017_brightfield":{"task_name":"Cell cycle phase (bf)","synthetic":False,"num_classes":  7},
-        "eulenberg_et_al_2017_darkfield":{"task_name":"Cell cycle phase (df)","synthetic":False,"num_classes":  7},
-        "eulenberg_et_al_2017_epifluorescence":{"task_name":"Cell cycle phase (ef)","synthetic":False,"num_classes":  7},
-        "held_et_al_2010":{"task_name":"Cell cycle phase","synthetic":False,"num_classes":  8},
+        "eulenberg_et_al_2017_brightfield":{"task_name":"Cell cycle phase (BF)","synthetic":False,"num_classes":  7},
+        "eulenberg_et_al_2017_darkfield":{"task_name":"Cell cycle phase (DF)","synthetic":False,"num_classes":  7},
+        "eulenberg_et_al_2017_epifluorescence":{"task_name":"Cell cycle phase (EF)","synthetic":False,"num_classes":  5},
+        "held_et_al_2010_galt":{"task_name":"Golgi morphology","synthetic":False,"num_classes":  8},
+        "held_et_al_2010_h2b":{"task_name":"Cell cycle phase","synthetic":False,"num_classes":  9},
+        "held_et_al_2010_mt":{"task_name":"Microtubule morphology","synthetic":False,"num_classes":  6},
         "hussain_et_al_2019":{"task_name":"Pre-cancerous and cervical cancer lesions","synthetic":False,"num_classes":  4},
         "icpr2020_pollen":{"task_name":"Pollen","synthetic":False,"num_classes":  4},
-        "jung_et_al_2022":{"task_name":"Synhtetic White blood cell","synthetic":True,"num_classes": 5},
-        "kather_et_al_2016":{"task_name":"colorectal cancer texture","synthetic":False,"num_classes": 8},
+        "jung_et_al_2022":{"task_name":"White blood cellc (S)","synthetic":True,"num_classes": 5},
+        "kather_et_al_2016":{"task_name":"colorectal cancer texture (a)","synthetic":False,"num_classes": 8},
+        "kather_et_al_2018":{"task_name":"colorectal cancer texture (b)","synthetic":False,"num_classes": 8},
+        "kather_et_al_2018_val7k":{"task_name":"colorectal cancer texture (c)","synthetic":False,"num_classes": 8},
         "nirschl_et_al_2018":{"task_name":"clinical chronic heart failure","synthetic":False,"num_classes": 2},
         "nirschl_unpub_fluorescence":{"task_name":"organisms and labeled structure","synthetic":False,"num_classes": 13},
         "tang_et_al_2019":{"task_name":"amyloid beta morphology patterns (a)","synthetic":False,"num_classes": 4},
         "wong_et_al_2022":{"task_name":"amyloid beta morphology patterns (b)","synthetic":False,"num_classes": 4},
+        "wu_et_al_2023":{"task_name":"Mitochondrial morphology in (CryoET)","synthetic":False,"num_classes": 2},
         }
     datasets:list[str] = tasks_metadata.keys()
 
