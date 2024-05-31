@@ -28,6 +28,7 @@ def main():
     parser.add_argument('--DEBUG',        action='store_true',          help='Flag to enable debug mode (only run inference on first  2 points)')
     parser.add_argument('--do_detection',        action='store_true',          help='Flag to enable debug mode (only run inference on first  2 points)')
     parser.add_argument('--log_detection_imgs',        action='store_true',          help='Flag to enable debug mode (only run inference on first  2 points)')
+    parser.add_argument('--do_batch_processing',        action='store_true',          help='Flag to enable batch processing, only valid for model="GptApi"')
     parser.add_argument('--data_root',    type=str,  default='/pasteur/data/jnirschl/datasets/biovlmdata/data/processed/', help='Dataset split to evaluate (default is "validation")')
     
     args:dict = parser.parse_args()
@@ -72,7 +73,7 @@ def main():
             if output_dir_name.is_file():
                 print(f"results {output_dir_name} have already been generated")
             else:
-                print(f"Running Inference for {output_file}")
+                print(f"Running Inference for {output_dir_name}")
                 do_inference(dataset_dict,model_dict,args,logger=logger)
 
 
@@ -84,7 +85,8 @@ def do_inference(
     args:dict,
     logger=None) -> None:
 
-    try:
+    # try:
+    if 1:
         if model_dict["model_type"] == "ENCODER":
             clip_inference.evaluate_dataset(
                 dataset = dataset_dict, 
@@ -112,14 +114,15 @@ def do_inference(
                     transform = args.transform, 
                     output_dir = Path(args.output_dir),
                     question_key  = "questions",
+                    do_batch_processing = args.do_batch_processing,
                     DEBUG = args.DEBUG)
 
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        print(f"Could not evaluate {dataset_dict['data_path']}")
-        if logger:
-            logger.info(f"Could not evaluate {dataset_dict['data_path']}")
-            logger.info(f"An error occurred: {e}")
+    # except Exception as e:
+    #     print(f"An error occurred: {e}")
+    #     print(f"Could not evaluate {dataset_dict['data_path']}")
+    #     if logger:
+    #         logger.info(f"Could not evaluate {dataset_dict['data_path']}")
+    #         logger.info(f"An error occurred: {e}")
     
     
     ### delet model f

@@ -34,6 +34,7 @@ def evaluate_dataset(dataset: dict,
     """
 
     output_name = output_dir / model_dict['name'] / dataset["dataset"].name
+
     results = []
     for j, data_point in enumerate(
             tqdm(
@@ -95,15 +96,14 @@ def evaluate_dataset(dataset: dict,
                                 j=j)
 
             results.append(result)
-            pass
 
-        # if j > 10:
+        # if j > 3:
         #     break
 
-    f_out_stem = f"{str(output_name)}-detection"
-    with open(str(f_out_stem) + ".json", 'w') as f:
+    f_out_stem = f"{str(output_name)}-detection.json"
+    Path(f_out_stem).parent.mkdir(exist_ok=True, parents=True)
+    with open(f_out_stem, 'w') as f:
         json.dump(results, f, indent=4)
-    # save_output(results, output_name)
 
 
 def add_class_name_prompt(data_point, dataset_name):

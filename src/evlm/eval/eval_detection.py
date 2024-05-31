@@ -185,7 +185,7 @@ def grit_localization_metric(pred_boxes: list[list],
 
 if __name__ == "__main__":
 	import ipdb
-	models = ["PaliGemma"]
+	models = ["PaliGemma", "QwenVLM"]
 	datasets = [
 		"burgess_et_al_2024_contour", "burgess_et_al_2024_eccentricity",
 		"burgess_et_al_2024_texture", "held_et_al_2010_galt",
