@@ -26,7 +26,7 @@ As I am working in the intersection of CS and Biomedical applications, this pack
 * Kosmos2        (General)
 * Fuyu           (General)
 * InstructBlip   (General)
-
+* PaliGemma      (General)
 
 ### Conch Enviorment: 
 * CONCH      (Pathology)

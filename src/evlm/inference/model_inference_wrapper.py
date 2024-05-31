@@ -14,8 +14,7 @@ sys.path.append(module_path)
 from dataloaders.json_loader import JsonDataset,collate_fn
 from dataloaders.jsonl_loader import JsonlDataset
 from inference_config import model_configuration
-import clip_inference
-import generative_inference
+import clip_inference, generative_inference, generative_inference_detection
 from  constants import  DATASETS, CLIP_MODELS, CHAT_MODELS,QUESTIONS,ALL_MODELS
 
 def main():
@@ -27,6 +26,8 @@ def main():
     parser.add_argument('--transform',    type=str,  default=None,      help='Data transformation function')
     parser.add_argument('--output_dir',   type=str,  default='outputs', help='Output directory to save evaluation results (default is "outputs")')
     parser.add_argument('--DEBUG',        action='store_true',          help='Flag to enable debug mode (only run inference on first  2 points)')
+    parser.add_argument('--do_detection',        action='store_true',          help='Flag to enable debug mode (only run inference on first  2 points)')
+    parser.add_argument('--log_detection_imgs',        action='store_true',          help='Flag to enable debug mode (only run inference on first  2 points)')
     parser.add_argument('--data_root',    type=str,  default='/pasteur/data/jnirschl/datasets/biovlmdata/data/processed/', help='Dataset split to evaluate (default is "validation")')
     
     args:dict = parser.parse_args()
@@ -64,11 +65,12 @@ def main():
             dataset_dict["data_path"] = Path(args.data_root) /datasets_ 
             dataset_dict["dataset"] =  JsonlDataset(dataset_path = dataset_dict["data_path"],split=args.split, limit=args.limit)
             dataset_dict["loader"]  =  dataset_dict["dataset"] #DataLoader(dataset, batch_size=1, collate_fn=collate_fn)
-            #import pdb; pdb.set_trace()
             output_file:str       = dataset_dict["dataset"].name + ".csv"
             output_dir_name:Path = Path(args.output_dir) / model_dict['name'] / output_file
+            if args.do_detection:
+                output_dir_name = Path(f"{output_dir_name.with_suffix('')}_detection.json")
             if output_dir_name.is_file():
-                print(f"results {output_file} have already been generated")
+                print(f"results {output_dir_name} have already been generated")
             else:
                 print(f"Running Inference for {output_file}")
                 do_inference(dataset_dict,model_dict,args,logger=logger)
@@ -93,14 +95,24 @@ def do_inference(
                 DEBUG = args.DEBUG)
 
         elif model_dict["model_type"] == "GENERATIVE":
-            generative_inference.evaluate_dataset(
-                dataset = dataset_dict, 
-                model_dict = model_dict, 
-                split = args.split, 
-                transform = args.transform, 
-                output_dir = Path(args.output_dir),
-                question_key  = "questions",
-                DEBUG = args.DEBUG)
+            if args.do_detection:
+                generative_inference_detection.evaluate_dataset(
+                    dataset = dataset_dict, 
+                    model_dict = model_dict, 
+                    split = args.split, 
+                    transform = args.transform, 
+                    log_detection_imgs = args.log_detection_imgs,
+                    output_dir = Path(args.output_dir),
+                    DEBUG = args.DEBUG)
+            else:
+                generative_inference.evaluate_dataset(
+                    dataset = dataset_dict, 
+                    model_dict = model_dict, 
+                    split = args.split, 
+                    transform = args.transform, 
+                    output_dir = Path(args.output_dir),
+                    question_key  = "questions",
+                    DEBUG = args.DEBUG)
 
     except Exception as e:
         print(f"An error occurred: {e}")
