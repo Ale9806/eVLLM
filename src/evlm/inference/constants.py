@@ -16,7 +16,9 @@ CLIP_MODELS: list[str] = [
     "ALIGN", "CLIP", "BLIP", "OpenCLIP", "QuiltCLIP", "OwlVIT2", "PLIP",
     "BioMedCLIP", "ConchCLIP"
 ]
-CHAT_MODELS: list[str] = ["CogVLM", "QwenVLM", "Kosmos2", "BLIP2", "PaliGemma"]
+CHAT_MODELS: list[str] = [
+    "CogVLM", "QwenVLM", "Kosmos2", "BLIP2", "PaliGemma", "GptApi"
+]
 
 ALL_MODELS: list[str] = CLIP_MODELS + CHAT_MODELS
 QUESTIONS = [

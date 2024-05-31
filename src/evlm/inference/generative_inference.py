@@ -60,6 +60,7 @@ def evaluate_dataset( dataset:dict,
             result["correct_answer"] = answer
             result["correct_idx"]    = position
             result["model_answers"]  = output
+            result["confidence"]  = output.get('confidence', np.nan)
 
             for key in sub_results.keys():
                 result[key] = sub_results[key]

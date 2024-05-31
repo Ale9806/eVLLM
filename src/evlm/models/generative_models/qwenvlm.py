@@ -62,7 +62,7 @@ class QwenVLM(BaseVLLM):
             'y2': m[3] * image_height
         } for m in bboxes_]
 
-        return bboxes
+        return {"bboxes" : bboxes}
 
 
 def test_detection():
