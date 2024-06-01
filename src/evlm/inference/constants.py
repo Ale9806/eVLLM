@@ -7,7 +7,7 @@ DATASETS: list[str] = [
     'eulenberg_et_al_2017_epifluorescence', "held_et_al_2010_galt",
     "held_et_al_2010_h2b", "held_et_al_2010_mt", 'hussain_et_al_2019',
     'icpr2020_pollen', 'jung_et_al_2022', 'kather_et_al_2016',
-    'kather_et_al_2018', "kather_et_al_2018_val7k"
+    'kather_et_al_2018', "kather_et_al_2018_val7k",
     'nirschl_et_al_2018', "nirschl_unpub_fluorescence", 'tang_et_al_2019',
     'wong_et_al_2022', "wu_et_al_2023"
 ]
