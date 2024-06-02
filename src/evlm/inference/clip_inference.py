@@ -35,9 +35,13 @@ def evaluate_dataset( dataset:dict,
     output_name = output_dir / model_dict['name'] / dataset["dataset"].name
     results = []
     for j, data_point in enumerate(tqdm( dataset["loader"], desc=f"Evaluating  {dataset['dataset'].name} | model:{model_dict['name']}")):
+        question_key:str = "questions"
         questions:dict[str,str] = data_point['custom_metadata'][question_key]
         image_id:str = data_point["metadata"]['name']
-        image:Path = dataset['dataset'].path / dataset['dataset'].split / image_id
+        if dataset['dataset'].name == "cognition":
+            image:Path = dataset['dataset'].path / image_id
+        else:
+            image:Path = dataset['dataset'].path / dataset['dataset'].split / image_id
         sub_results:dict[str,str] = init_sub_results(data_point)
         
           
@@ -47,12 +51,14 @@ def evaluate_dataset( dataset:dict,
             answer:str   = questions[question_class]["answer"]
             options:list[str] = questions[question_class]["options"]
             position:int = options.index(answer)
+            
         
             assert answer in options,f"answer not in options: {answer} not in {options}"
             
             if question_key == "questions":
                 options = [question + " " + option for option in options]
-                
+
+            #import pdb; pdb.set_trace()
             output:dict = model_dict["model"].forward(image,options)
 
             result["question_class"] = question_class
@@ -61,6 +67,8 @@ def evaluate_dataset( dataset:dict,
             result["correct_answer"] = answer
             result["correct_idx"]    = position
             result["model_answers"]  = output
+
+            
 
             for key in sub_results.keys():
                 result[key] = sub_results[key]

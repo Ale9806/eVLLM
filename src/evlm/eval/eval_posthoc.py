@@ -59,29 +59,27 @@ def process_models(
         #import pdb;pdb.set_trace()
         get_results(df, model)
 
-        result = df.groupby("question_class")["is_correct"].mean().to_dict()
-        result["dataset_total"] = df["is_correct"].mean()
-
-
         
-        for key, value in result.items():
-            if key != 'dataset_total':
-                bstp = bootstrap((df[df["question_class"] == key]["is_correct"],), np.mean, confidence_level=0.95,vectorized=True, batch=100, method='basic')
-            else:
-                bstp = bootstrap((df["is_correct"],), np.mean, confidence_level=0.95, vectorized=True, batch=100, method='basic')
 
-            ci_at_95 = np.abs(bstp.confidence_interval.high -   result[key])
+        #result = df.groupby("question_class")["is_correct"].mean().to_dict()
+        #result["dataset_total"] = df["is_correct"].mean()
+        result = {}
+        groups = [["domain","domain_1"],["modality","modality_1"],["stain","stain_1"],["subdomain","subdomain_1"],["submodality","submodality_1"]]
         
-            save_results[model] = {key:{"accuracy":result[key],"se":bstp.standard_error},"ci95":ci_at_95 }
-            result[key] = f"{np.round(result[key],2)} ({ci_at_95})"
+        for group in groups:
+            df_filtered, _ = filter_dataset(df,{"question_class":group})
+            mean           =  df_filtered["is_correct"].mean()
+            bstp = bootstrap((df_filtered["is_correct"],), np.mean, confidence_level=0.95, vectorized=True, batch=100, method='basic')
+            ci_at_95            = np.abs(bstp.confidence_interval.high -   mean)
+            save_results[model] = {group[0]:{"accuracy":mean,"se":bstp.standard_error},"ci95":ci_at_95 }
+            result[group[0]] = f"{np.round(mean,2)} ({ci_at_95})"
 
             #import pdb; pdb.set_trace()
-            
     
         result["model"] = model
         results.append(result)
    
-
+    
     return results,save_results
 
 
@@ -172,8 +170,11 @@ def process_models_question_only(
             dataset_name = row['dataset']
             metadata = tasks_metadata.get(dataset_name, {})
             for key, value in metadata.items():
+                if key == "task_name":
+                    value += " (" +  metadata["submodality"] + ")"
                 df.at[index, f'{key}_metadata'] = value
 
+        #import pdb;pdb.set_trace()
         pivot_df = df.pivot(index='task_name_metadata', columns='model', values=['accuracy'])
 
     else:
@@ -182,6 +183,7 @@ def process_models_question_only(
     pivot_df = pivot_df.T
     pivot_df.reset_index(inplace=True)
     
+ 
     return results,pivot_df
 
 
@@ -190,16 +192,13 @@ if __name__ == "__main__":
 
 
     round_to           = 2
-    models:list[str]   = ["ALIGN","BLIP","OpenCLIP","BioMedCLIP","ConchCLIP","PLIP","QuiltCLIP","CogVLM","QwenVLM"]
-    models:list[str]  = ["PaliGemma","CogVLM","ALIGN","BLIP","OpenCLIP","QuiltCLIP","PLIP","BioMedCLIP","ConchCLIP"]
+    #models:list[str]   = ["ALIGN","BLIP","OpenCLIP","BioMedCLIP","ConchCLIP","PLIP","QuiltCLIP","CogVLM","QwenVLM","Random_model"]
+    models:list[str]  = ["QwenVLM","Random_model","CLIP","PaliGemma","CogVLM","ALIGN","BLIP","OpenCLIP","QuiltCLIP","PLIP","BioMedCLIP","ConchCLIP"]
     
-
-  
-
     datasets:list[str] = tasks_metadata.keys()
 
     extension:str = ".csv"
-    filter_dict:dict[str,list[str]] = {"modality":["light microscopy"],"domain":["pathology"]}
+    #filter_dict:dict[str,list[str]] = {"modality":["light microscopy"],"domain":["pathology"]}
     filter_dict:dict[str,list[str]] = None
     filenmae:str = "eval"
     if filter_dict:
@@ -207,19 +206,19 @@ if __name__ == "__main__":
   
     output_path:str    = pathlib.Path("outputs","tables",filenmae )
 
-    #results,save_results = process_models(models=models, 
-    #                         datasets=datasets,
-    #                         filter_dict = filter_dict)
+    # results,save_results = process_models(models=models, 
+    #                          datasets=datasets,
+    #                          filter_dict = filter_dict)
 
-    #print(f"Save results at:{output_path}")
+    # print(f"Save results at:{output_path}")
 
    
-    #df_result = pd.DataFrame(results)
-    #model_column = df_result['model']
-    #df_result.drop(columns=['model'], inplace=True)
-    #df_result.insert(0, 'model', model_column)
-    #save_table_to_latex_and_csv(df_result,output_path)
-    #save_dict_to_json(save_results,output_path)
+    # df_result = pd.DataFrame(results)
+    # model_column = df_result['model']
+    # df_result.drop(columns=['model'], inplace=True)
+    # df_result.insert(0, 'model', model_column)
+    # save_table_to_latex_and_csv(df_result,output_path)
+    # save_dict_to_json(save_results,output_path)
 
 
     #########################################

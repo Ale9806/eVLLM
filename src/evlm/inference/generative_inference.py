@@ -39,7 +39,10 @@ def evaluate_dataset( dataset:dict,
     for j, data_point in enumerate(tqdm( dataset["loader"], desc=f"Evaluating  {dataset['dataset'].name} | model:{model_dict['name']}")):
         questions:dict[str,str] = data_point['custom_metadata'][question_key]
         image_id:str = data_point["metadata"]['name']
-        image:Path = dataset['dataset'].path / dataset['dataset'].split / image_id
+        if dataset['dataset'].name == "cognition":
+            image:Path = dataset['dataset'].path / image_id
+        else:
+            image:Path = dataset['dataset'].path / dataset['dataset'].split / image_id
         sub_results:dict[str,str] = init_sub_results(data_point,add_synonyms=True)
     
         for question in questions.keys():

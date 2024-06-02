@@ -16,14 +16,14 @@ DATASETS:list[str] = ['acevedo_et_al_2020',
                       'jung_et_al_2022',
                       'kather_et_al_2016',
                       'kather_et_al_2018',
-                      "kather_et_al_2018_val7k"
+                      "kather_et_al_2018_val7k",
                       'nirschl_et_al_2018',  
                       "nirschl_unpub_fluorescence",
                       'tang_et_al_2019', 
                       'wong_et_al_2022',
                       "wu_et_al_2023" ]
 
-CLIP_MODELS:list[str] = ["ALIGN","CLIP","BLIP","OpenCLIP","QuiltCLIP","OwlVIT2","PLIP","BioMedCLIP","ConchCLIP"]
+CLIP_MODELS:list[str] = ["ALIGN","CLIP","BLIP","OpenCLIP","QuiltCLIP","OwlVIT2","PLIP","BioMedCLIP","Random_model"] #"ConchCLIP"
 CHAT_MODELS:list[str] = ["CogVLM","QwenVLM","Kosmos2","BLIP2","PaliGemma"]
 
 ALL_MODELS: list[str] = CLIP_MODELS + CHAT_MODELS

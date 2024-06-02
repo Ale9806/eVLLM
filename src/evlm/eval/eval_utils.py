@@ -4,36 +4,224 @@ import pandas as pd
 import os
 import numpy as np
 import json
-
-
+import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
+import pandas as pd
 tasks_metadata = {
-        "acevedo_et_al_2020":{"task_name":"White blood cell (BF)","synthetic":False,"num_classes": 8},
-        "burgess_et_al_2024_contour":{"task_name":"Cell contour (S)","synthetic":True,"num_classes": 3},
-        "burgess_et_al_2024_eccentricity":{"task_name":"Cell eccentricity (S)","synthetic":True,"num_classes": 3},
-        "burgess_et_al_2024_texture":{"task_name":"Cell texture","synthetic (S)":True,"num_classes": 3},
-        "empiar_sbfsem":{"task_name":"Organisms and structures in EM","synthetic":True,"num_classes": 5},
-        "colocalization_benchmark":{"task_name":"Colocalization patterns","synthetic":True,"num_classes": 4},
-        "eulenberg_et_al_2017_brightfield":{"task_name":"Cell cycle phase (BF)","synthetic":False,"num_classes":  7},
-        "eulenberg_et_al_2017_darkfield":{"task_name":"Cell cycle phase (DF)","synthetic":False,"num_classes":  7},
-        "eulenberg_et_al_2017_epifluorescence":{"task_name":"Cell cycle phase (EF)","synthetic":False,"num_classes":  5},
-        "held_et_al_2010_galt":{"task_name":"Golgi morphology","synthetic":False,"num_classes":  8},
-        "held_et_al_2010_h2b":{"task_name":"Cell cycle phase","synthetic":False,"num_classes":  9},
-        "held_et_al_2010_mt":{"task_name":"Microtubule morphology","synthetic":False,"num_classes":  6},
-        "hussain_et_al_2019":{"task_name":"Pre-cancerous and cervical cancer lesions","synthetic":False,"num_classes":  4},
-        "icpr2020_pollen":{"task_name":"Pollen","synthetic":False,"num_classes":  4},
-        "jung_et_al_2022":{"task_name":"White blood cellc (S)","synthetic":True,"num_classes": 5},
-        "kather_et_al_2016":{"task_name":"colorectal cancer texture (a)","synthetic":False,"num_classes": 8},
-        "kather_et_al_2018":{"task_name":"colorectal cancer texture (b)","synthetic":False,"num_classes": 8},
-        "kather_et_al_2018_val7k":{"task_name":"colorectal cancer texture (c)","synthetic":False,"num_classes": 8},
-        "nirschl_et_al_2018":{"task_name":"clinical chronic heart failure","synthetic":False,"num_classes": 2},
-        "nirschl_unpub_fluorescence":{"task_name":"organisms and labeled structure","synthetic":False,"num_classes": 13},
-        "tang_et_al_2019":{"task_name":"amyloid beta morphology patterns (a)","synthetic":False,"num_classes": 4},
-        "wong_et_al_2022":{"task_name":"amyloid beta morphology patterns (b)","synthetic":False,"num_classes": 4},
-        "wu_et_al_2023":{"task_name":"Mitochondrial morphology in (CryoET)","synthetic":False,"num_classes": 2},
+    'acevedo_et_al_2020': {
+        'task_name': 'White blood cell',
+        'synthetic': False,
+        'num_classes': 8,
+        'submodality': 'BF',
+        'taxonomy': 'Cell/organism/structure type identification'
+    },
+    'burgess_et_al_2024_contour': {
+        'task_name': 'Cell contour',
+        'synthetic': True,
+        'num_classes': 3,
+        'submodality': 'S',
+        'taxonomy': 'cell texture and morphology profiling'
+    },
+    'burgess_et_al_2024_eccentricity': {
+        'task_name': 'Cell eccentricity',
+        'synthetic': True,
+        'num_classes': 3,
+        'submodality': 'S',
+        'taxonomy': 'cell texture and morphology profiling'
+    },
+    'burgess_et_al_2024_texture': {
+        'task_name': 'Cell texture',
+        'synthetic': True,
+        'num_classes': 3,
+        'submodality': 'S',
+        'taxonomy': 'cell texture and morphology profiling'
+    },
+    'empiar_sbfsem': {
+        'task_name': 'Organisms and structures in EM',
+        'synthetic': False,
+        'num_classes': 5,
+        'submodality': 'SBSEM',
+        'taxonomy': 'Distinguish normal vs. abnormal'
+    },
+    'colocalization_benchmark': {
+        'task_name': 'Molecule colocalization',
+        'synthetic': True,
+        'num_classes': 4,
+        'submodality': 'S',
+        'taxonomy': 'Single molecule imaging'
+    },
+    'eulenberg_et_al_2017_brightfield': {
+        'task_name': 'Cell cycle phase',
+        'synthetic': False,
+        'num_classes': 7,
+        'submodality': 'BF',
+        'taxonomy': 'Cell cycle and stage identification'
+    },
+    'eulenberg_et_al_2017_darkfield': {
+        'task_name': 'Cell cycle phase',
+        'synthetic': False,
+        'num_classes': 7,
+        'submodality': 'DF',
+        'taxonomy': 'Cell cycle and stage identification'
+    },
+    'eulenberg_et_al_2017_epifluorescence': {
+        'task_name': 'Cell cycle phase',
+        'synthetic': False,
+        'num_classes': 5,
+        'submodality': 'EF',
+        'taxonomy': 'Cell cycle and stage identification'
+    },
+    'held_et_al_2010_galt': {
+        'task_name': 'Golgi morphology',
+        'synthetic': False,
+        'num_classes': 8,
+        'submodality': 'EF',
+        'taxonomy': 'Cell cycle and stage identification'
+    },
+    'held_et_al_2010_h2b': {
+        'task_name': 'Cell cycle phase with chromatin marker',
+        'synthetic': False,
+        'num_classes': 9,
+        'submodality': 'EF',
+        'taxonomy': 'Cell cycle and stage identification'
+    },
+    'held_et_al_2010_mt': {
+        'task_name': 'Microtubule morphology',
+        'synthetic': False,
+        'num_classes': 6,
+        'submodality': 'EF',
+        'taxonomy': 'Cell cycle and stage identification'
+    },
+    'hussain_et_al_2019': {
+        'task_name': 'Pre-cancerous and cervical cancer lesions',
+        'synthetic': False,
+        'num_classes': 4,
+        'submodality': 'BF',
+        'taxonomy': 'Interpretation of neoplastic histopathology'
+    },
+    'icpr2020_pollen': {
+        'task_name': 'Pollen structures',
+        'synthetic': False,
+        'num_classes': 4,
+        'submodality': 'BF',
+        'taxonomy': 'Distinguish normal vs. abnormal'
+    },
+    'jung_et_al_2022': {
+        'task_name': 'White blood cell',
+        'synthetic': True,
+        'num_classes': 5,
+        'submodality': 'S',
+        'taxonomy': 'Cell/organism/structure type identification'
+    },
+    'kather_et_al_2016': {
+        'task_name': 'colorectal cancer texture [a]',
+        'synthetic': False,
+        'num_classes': 8,
+        'submodality': 'BF',
+        'taxonomy': 'Interpretation of neoplastic histopathology'
+    },
+    'kather_et_al_2018': {
+        'task_name': 'colorectal cancer texture [b]',
+        'synthetic': False,
+        'num_classes': 8,
+        'submodality': 'BF',
+        'taxonomy': 'Interpretation of neoplastic histopathology'
+    },
+    'kather_et_al_2018_val7k': {
+        'task_name': 'colorectal cancer texture [c]',
+        'synthetic': False,
+        'num_classes': 8,
+        'submodality': 'BF',
+        'taxonomy': 'Interpretation of neoplastic histopathology'
+    },
+    'nirschl_et_al_2018': {
+        'task_name': 'clinical chronic heart failure',
+        'synthetic': False,
+        'num_classes': 2,
+        'submodality': 'BF',
+        'taxonomy': 'Interpretation of non-neoplastic histopathology'
+    },
+    'nirschl_unpub_fluorescence': {
+        'task_name': 'organisms and labeled structure',
+        'synthetic': False,
+        'num_classes': 13,
+        'submodality': 'TIRF',
+        'taxonomy': 'Cell/organism/structure type identification'
+    },
+    'tang_et_al_2019': {
+        'task_name': 'amyloid beta patterns [a]',
+        'synthetic': False,
+        'num_classes': 4,
+        'submodality': 'BF',
+        'taxonomy': 'Interpretation of non-neoplastic histopathology'
+    },
+    'wong_et_al_2022': {
+        'task_name': 'amyloid beta patterns [b]',
+        'synthetic': False,
+        'num_classes': 4,
+        'submodality': 'BF',
+        'taxonomy': 'Interpretation of non-neoplastic histopathology'
+    },
+    'wu_et_al_2023': {
+        'task_name': 'Mitochondrial morphology in electron microscopy',
+        'synthetic': False,
+        'num_classes': 2,
+        'submodality': 'CET',
+        'taxonomy': 'Distinguish normal vs. abnormal'
+    }
+}
+CLIP_MODELS:list[str] = ["ALIGN","CLIP","BLIP","OpenCLIP","QuiltCLIP","OwlVIT2","PLIP","BioMedCLIP","ConchCLIP","Random_model"]
+
+
+def get_model_colors(verion=0):
+    if verion==0:
+        tab20_colors = plt.get_cmap('tab20').colors
+        model_colors = {
+            ## autoregressive generalist
+            'CogVLM':"blue",
+            'QwenVLM':"red",
+            'PaliGemma':"orange",
+            
+            ## contrastive generalist
+            'ALIGN': tab20_colors[6],
+            'BLIP': tab20_colors[4],
+            'OpenCLIP': tab20_colors[8],
+            "CLIP":tab20_colors[0],
+        
+            ## specialist 
+            'BioMedCLIP': 'mediumpurple',
+            'QuiltCLIP': '#FFB6C1',
+            'PLIP': '#FF69B4',
+            'ConchCLIP': '#DDA0DD',
+            
+            ## random
+            "Random":"gray",
+            "Random_model":"gray",
         }
+    else:
+        raise ValueError()
+        
+    return model_colors 
 
-CLIP_MODELS:list[str] = ["ALIGN","CLIP","BLIP","OpenCLIP","QuiltCLIP","OwlVIT2","PLIP","BioMedCLIP","ConchCLIP"]
 
+def get_tasks_by_taxonomy(tasks_metadata,add_submodality = True):
+    taxonomy_dict = {}
+    
+    for task in tasks_metadata.values():
+        taxonomy = task['taxonomy']
+        task_name = task['task_name']
+        if add_submodality:
+             task_name += " (" +  task["submodality"] + ")"
+
+
+        #import pdb;pdb.set_trace()
+        
+        if taxonomy not in taxonomy_dict:
+            taxonomy_dict[taxonomy] = []
+        
+        taxonomy_dict[taxonomy].append(task_name)
+    
+    return taxonomy_dict
 
 def extract_top_k_element(cell_value,k=1):
     """
@@ -173,19 +361,20 @@ def replace_nan(df):
   
 
 def get_results(df:pd.DataFrame, model:str) -> None:
-    #try:
     if model not in CLIP_MODELS:
-    #import pdb;pdb.set_trace()
         replace_nan(df)
         df["prediction"] = df.apply(lambda row: eval(row["model_answers"])["text"], axis=1)
         df['is_correct'] = df.apply(check_prediction, axis=1)
 
+
     else: 
         df["prediction"] = df.apply(lambda row: eval(row["model_answers"])["pred"][0] , axis=1)
-        df["is_correct"] = 1*(df["correct_idx"] == df["prediction"])
-    #except:
-    #    import pdb;pdb.set_trace()
-
+        if model == "Random_model":
+            df["is_correct"] = 1*(df["correct_answer"] == df["prediction"])
+            
+        else:
+            df["is_correct"] = 1*(df["correct_idx"] == df["prediction"])
+    
 
 
 def get_confidence(row):
@@ -193,3 +382,8 @@ def get_confidence(row):
     predicted_class = ast.literal_eval(row['model_answers'])['pred'][0]
     return probs[predicted_class]
 
+
+
+if __name__ == "__main__":
+    groups =get_tasks_by_taxonomy(tasks_metadata)
+    import pdb;pdb.set_trace()

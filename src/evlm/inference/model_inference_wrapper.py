@@ -62,16 +62,22 @@ def main():
         for datasets_ in dataset_list:
             dataset_dict = {}
             dataset_dict["data_path"] = Path(args.data_root) /datasets_ 
-            dataset_dict["dataset"] =  JsonlDataset(dataset_path = dataset_dict["data_path"],split=args.split, limit=args.limit)
+            if datasets_ == "cognition":
+                dataset_dict["dataset"] =  JsonDataset(dataset_path = dataset_dict["data_path"],split=args.split, limit=args.limit)
+            else:
+                dataset_dict["dataset"] =  JsonlDataset(dataset_path = dataset_dict["data_path"],split=args.split, limit=args.limit)
             dataset_dict["loader"]  =  dataset_dict["dataset"] #DataLoader(dataset, batch_size=1, collate_fn=collate_fn)
             #import pdb; pdb.set_trace()
             output_file:str       = dataset_dict["dataset"].name + ".csv"
             output_dir_name:Path = Path(args.output_dir) / model_dict['name'] / output_file
-            if output_dir_name.is_file():
-                print(f"results {output_file} have already been generated")
-            else:
-                print(f"Running Inference for {output_file}")
+            #if output_dir_name.is_file():
+            #    print(f"results {output_file} have already been generated")
+            #else:
+            print(f"Running Inference for {output_file}")
+            try:
                 do_inference(dataset_dict,model_dict,args,logger=logger)
+            except:
+                print(f"Could not do infernece for {model_name}:{datasets_}")
 
 
 
@@ -145,5 +151,7 @@ if __name__ == "__main__":
 #python src/evlm/inference/model_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model QwenVLM
 #python src/evlm/inference/model_inference_wrapper.py --dataset_name all --model gen
 
-
+#python src/evlm/inference/model_inference_wrapper.py --dataset_name "acevedo_et_al_2020" --model Random_model
 #python src/evlm/inference/model_inference_wrapper.py --dataset_name "colocalization_benchmark" --model CogVLM
+
+#python src/evlm/inference/model_inference_wrapper.py --dataset_name cognition_0601 --model ALIGN

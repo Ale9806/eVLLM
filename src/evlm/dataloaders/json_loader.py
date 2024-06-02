@@ -79,11 +79,11 @@ def collate_fn(batch):
 
 
 if __name__ == "__main__":
-    split: str = 'validation'
+    split: str = 'test'
     DATA_ROOT = Path("/pasteur/data/jnirschl/datasets/biovlmdata/data/processed/")
     sub_datasets: list[str] = os.listdir(DATA_ROOT)
     sub_datasets = list(set(sub_datasets) - set(['bravura.tex', 'bravura.md','image_json_pairs.jsonl', 'bravura.pdf', 'bravura.feather',"burgess_et_al_2024"]))
-
+    sub_datasets = ["cognition"]
     dataset_path = DATA_ROOT / sub_datasets[0] 
     print(dataset_path)
     custom_dataset = JsonDataset(dataset_path,split=split, limit=1000)

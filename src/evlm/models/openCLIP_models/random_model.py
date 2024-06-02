@@ -6,11 +6,11 @@ import random
 
 FIXTURES_PATH = str(Path(__file__).resolve().parent)
 sys.path.append(FIXTURES_PATH)
-
+from baseclip import BaseCLIP
 
 random.seed(42)
 
-class Random():
+class Random_model(BaseCLIP):
     """
     Random class for utilizing the BiomedCLIP model.
 
@@ -18,7 +18,7 @@ class Random():
         eval_mode (bool, s optional): Whether to set the model in evaluation mode. Defaults to True.
         context_length (int, optional): Length of input context. Defaults to 256.
     """
-
+    random.seed(42)
     def __init__(self,eval_mode:bool=True,context_length:int=256,verbose:bool=True):
         """
         Initialize the Model object.
@@ -46,10 +46,14 @@ class Random():
 
         
         """
-        result = dict()
-        model_answers = options.copy()
+        output = dict()
+        #import pdb;pdb.set_trace()
+        model_answers = texts.copy()
         random.shuffle(model_answers) 
         output["pred_prompt"] = model_answers
-        output["pred"] = [model_answers.index(option) for option in options]
+        output["pred"] = model_answers
 
         return output
+
+if __name__ == "__main__":
+    rm = Random_model()
