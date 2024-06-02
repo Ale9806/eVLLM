@@ -27,4 +27,6 @@ CLIP_MODELS:list[str] = ["ALIGN","CLIP","BLIP","OpenCLIP","QuiltCLIP","OwlVIT2",
 CHAT_MODELS:list[str] = ["CogVLM","QwenVLM","Kosmos2","BLIP2","PaliGemma"]
 
 ALL_MODELS: list[str] = CLIP_MODELS + CHAT_MODELS
-QUESTIONS = ['modality', 'submodality', 'domain', 'subdomain' , 'stain', 'classification']
+QUESTIONS = [
+    'modality', 'submodality', 'domain', 'subdomain', 'stain', 'classification'
+]

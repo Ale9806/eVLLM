@@ -21,7 +21,7 @@ class JsonDataset(Dataset):
                        split: str = None,
                        extension: str = "json", 
                        limit: int = None, 
-                       shuffle_dataset: bool = True,
+                       shuffle_dataset: bool = False,
                        verbose:bool=True):
 
         
