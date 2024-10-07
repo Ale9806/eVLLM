@@ -33,9 +33,7 @@ As I am working in the intersection of CS and Biomedical applications, this pack
 
 ## Installation
 
-```bash
-$ pip install evlm
-```
+Use the requirements.txt to install the required dependices
 
 ## Usage
 
