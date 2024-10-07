@@ -1,4 +1,10 @@
 # Byte-compiled / optimized / DLL files
+**/*.pdf
+**/*.png
+**/*.jpg
+
+*.png
+*.jpg
 tmp*
 outputs/
 slurm_logs/
