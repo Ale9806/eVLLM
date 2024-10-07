@@ -68,6 +68,8 @@ def evaluate_dataset(
             template:str = prompt +"\n" + "Question:" + question_str + "\n" + joined_options
 
             output:dict         = model_dict["model"].forward(image,template)
+    
+
             result["question_class"] = question
             result["questions"]      = template
             result["image_id"]       = image_id
@@ -78,59 +80,61 @@ def evaluate_dataset(
             for key in sub_results.keys():
                 result[key] = sub_results[key]
 
-    # store the function args and kwargs for running each question
-    kwargs_all = []
-
-    for j, data_point in enumerate(dataset["loader"]):
-        questions: dict[str, str] = data_point['custom_metadata'][question_key]
-        image_id: str = data_point["metadata"]['name']
-        image: Path = dataset['dataset'].path / dataset[
-            'dataset'].split / image_id
-        sub_results: dict[str, str] = init_sub_results(data_point,
-                                                       add_synonyms=True)
-
-        for question in questions.keys():
-            kwargs = dict(question=question,
-                          questions=questions,
-                          image=image,
-                          image_id=image_id,
-                          model_dict=model_dict,
-                          prompt=prompt,
-                          sub_results=sub_results,
-                          split=split,
-                          transform=transform)
-            kwargs_all.append(kwargs)
-
-        if DEBUG:
-            if j == 10:
-                import pdb;pdb.set_trace()
-                break
-
-    desc = f"Evaluating  {dataset['dataset'].name} | model:{model_dict['name']}"
-
-    # standard sequential processing
-    if not do_batch_processing:
-        results = []
-
-        for kwargs in tqdm(kwargs_all, desc=desc):
-            result = process_question(**kwargs)
             results.append(result)
 
-    # batch processing for GPT api only
-    else:
-        if model_dict['name'] != "GptApi":
-            raise ValueError("batch processing only valid for model 'GptApi'")
+    # # store the function args and kwargs for running each question
+    # kwargs_all = []
 
-        results = []
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            futures = [
-                executor.submit(process_question, **kwargs)
-                for kwargs in kwargs_all
-            ]
-            for future in tqdm(concurrent.futures.as_completed(futures),
-                               total=len(kwargs_all),
-                               desc=desc):
-                results.append(future.result())
+    # for j, data_point in enumerate(dataset["loader"]):
+    #     questions: dict[str, str] = data_point['custom_metadata'][question_key]
+    #     image_id: str = data_point["metadata"]['name']
+    #     image: Path = dataset['dataset'].path / dataset[
+    #         'dataset'].split / image_id
+    #     sub_results: dict[str, str] = init_sub_results(data_point,
+    #                                                    add_synonyms=True)
+
+    #     for question in questions.keys():
+    #         kwargs = dict(question=question,
+    #                       questions=questions,
+    #                       image=image,
+    #                       image_id=image_id,
+    #                       model_dict=model_dict,
+    #                       prompt=prompt,
+    #                       sub_results=sub_results,
+    #                       split=split,
+    #                       transform=transform)
+    #         kwargs_all.append(kwargs)
+
+    #     if DEBUG:
+    #         if j == 10:
+    #             import pdb;pdb.set_trace()
+    #             break
+
+    # desc = f"Evaluating  {dataset['dataset'].name} | model:{model_dict['name']}"
+    # import pdb; pdb.set_trace()
+    # # standard sequential processing
+    # if not do_batch_processing:
+    #     results = []
+
+    #     for kwargs in tqdm(kwargs_all, desc=desc):
+    #         result = process_question(**kwargs)
+    #         results.append(result)
+
+    # # batch processing for GPT api only
+    # else:
+    #     if model_dict['name'] != "GptApi":
+    #         raise ValueError("batch processing only valid for model 'GptApi'")
+
+    #     results = []
+    #     with concurrent.futures.ThreadPoolExecutor() as executor:
+    #         futures = [
+    #             executor.submit(process_question, **kwargs)
+    #             for kwargs in kwargs_all
+    #         ]
+    #         for future in tqdm(concurrent.futures.as_completed(futures),
+    #                            total=len(kwargs_all),
+    #                            desc=desc):
+    #             results.append(future.result())
 
     save_output(results, output_name)
 

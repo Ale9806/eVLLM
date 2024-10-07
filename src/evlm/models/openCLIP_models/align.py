@@ -30,8 +30,9 @@ class ALIGN(BaseCLIP):
         
         """
         output:dict     = {}
+   
         processed_images = self.preprocess_image(images, return_tensors ="pil")
-        #import pdb;pdb.set_trace()
+     
         with torch.no_grad():
             inputs  = self.preprocess(text=texts, images=processed_images, return_tensors="pt", padding="max_length").to(self.device)
             outputs = self.model(**inputs)

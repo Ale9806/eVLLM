@@ -33,6 +33,13 @@ class BioMedCLIP(BaseCLIP):
         self.tokenizer = get_tokenizer('hf-hub:microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224')
         self.load_model()
 
+    def forward_vision_only(self,images:list[str]) -> dict[str,list[float]]:
+        processed_images = self.preprocess_image(images)
+        with torch.no_grad():
+            image_features  = self.model.encode_image(processed_images)
+            return image_features
+
+
     def forward(self,images:list[str], texts:list[str]) -> dict[str,list[float]]:
         """
         Forward pass through the model.

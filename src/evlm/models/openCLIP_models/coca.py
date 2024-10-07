@@ -8,14 +8,15 @@ sys.path.append(FIXTURES_PATH)
 
 from baseclip import BaseCLIP
 
-class OpenCLIP(BaseCLIP):
-    def __init__(self,eval_mode:bool=True,context_length:int=77,verbose:bool=True,pretrained:str="openai"):
+class CoCa(BaseCLIP):
+    def __init__(self,eval_mode:bool=True,context_length:int=77,verbose:bool=True):
         #'laion2b_s34b_b79k'
-        print(f"initalized openclip from {pretrained}")
         super().__init__(eval_mode,context_length,verbose)
-        self.model, _, self.preprocess = create_model_and_transforms('ViT-B-32', pretrained=pretrained)
-        self.tokenizer = get_tokenizer('ViT-B-32')
+        self.model, _, transform = create_model_and_transforms(model_name='coca_ViT-B-32',pretrained='laion2b_s13b_b90k')
+        self.tokenizer = get_tokenizer('coca_ViT-B-32')
         self.load_model()
+
+ 
 
     def forward(self,images:list[str], texts:list[str]) -> dict[str,list[float]]:
         """
@@ -31,10 +32,12 @@ class OpenCLIP(BaseCLIP):
         
         """
         output:dict     = {}
-        processed_images = self.preprocess_image(images)
+        #processed_images = self.preprocess_image(images)
         tokenize_prompt  = self.tokenize(texts)
 
         with torch.no_grad():
+            text_features  = self.model.encode_text(tokenize_prompt)
+            import pdb;pdb.set_trace()
             image_features = self.model.encode_image(processed_images)
             text_features  = self.model.encode_text(tokenize_prompt)
             image_features /= image_features.norm(dim=-1, keepdim=True)
@@ -48,7 +51,7 @@ class OpenCLIP(BaseCLIP):
             return output
 
 if __name__ == "__main__":
-    model = OpenCLIP()
+    model = CoCa()
     img_path:str      = "/pasteur/u/ale9806/Repositories/evlm/test_images/"
     images:list[str]  = [img_path +"/cat.jpeg",img_path +"/dog.jpeg"]
     prompts:list[str] = ["An image of a cat","An image of a dog"]

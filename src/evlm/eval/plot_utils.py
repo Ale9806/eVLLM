@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 from sklearn.calibration import calibration_curve
+from sklearn.metrics import brier_score_loss
+
 import numpy as np
 
 
@@ -17,11 +19,13 @@ def save_plot(plt,output_name:str):
     print(f"Plot saved as {pdf_path} and {png_path}")
 
 
-def plot_calibration(df,output_name,bins:int=10,model:str=None):
+def plot_calibration(df,output_name,bins:int=100,model:str=None):
     if model:
         plt.title(model)
    
     prob_true, prob_pred = calibration_curve(df["is_correct"], df["confidence"], n_bins=bins)
+    b_score = brier_score_loss(df["is_correct"], df["confidence"])
+    plt.title(f"Brier Score:{b_score}")
     plt.plot(prob_true, prob_pred,"bo")
     plt.plot([0, 1], [0, 1], linestyle='--', color='gray')
 
@@ -74,7 +78,7 @@ def plot_length_confidence(df,output_name,model:str=None):
     ax.set_xlabel("Question length")
     ax.set_ylabel("Confidence")
     ax.set_ylim([0,1])
-    ax.set_title(model)
+    #ax.set_title(model)
     save_plot(plt,output_name + "correct_incorrect")
     
      

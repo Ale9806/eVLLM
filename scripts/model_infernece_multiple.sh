@@ -34,15 +34,15 @@ do
 #SBATCH --error=slurm_logs/error-${dataset}.log
 #SBATCH -p pasteur
 #SBATCH -A pasteur
-#SBATCH --gres=gpu:a6000
+#SBATCH --gres=gpu:l40s
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=1
-#SBATCH --time=01:00:00
+#SBATCH --time=48:00:00
 #SBATCH --mem=70G
 
 # Contrastive:
-python src/evlm/inference/model_inference_wrapper.py --dataset_name $dataset --model CogVLM
+python src/evlm/inference/model_inference_wrapper.py --dataset_name $dataset --model QwenVLM
 EOT
 
 

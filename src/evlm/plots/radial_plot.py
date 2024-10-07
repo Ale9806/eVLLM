@@ -39,9 +39,9 @@ def create_and_save_radar_plot(
     data_frame, 
     order=None, 
     filename='figures/radar_plot', 
-    color_area=0.1,
+    color_area=0.001,
     remove_tick_names:bool=False,
-    add_legend:bool=True):
+    add_legend:bool=False):
     # Create a figure and axis for the radar plot
     categories = data_frame.index.to_list()
     values     = data_frame.to_numpy()
@@ -67,9 +67,37 @@ def create_and_save_radar_plot(
 
         ax.plot(angles, values, label=model,color = colors[model])
         if color_area:
+            #if model == "Random_model":
+            #    ax.fill(angles, values, alpha=0.4)
             ax.fill(angles, values, alpha=color_area)  # Adjust alpha as needed for transparency
 
     # Set the labels for each category
+    #import pdb;pdb.set_trace()
+    better_lengends = {"domain":"Domain",
+                       "subdomain":"Subdomain",
+                       "modality":"Modality",
+                       "submodality":"Submodality",
+                       "stain":"Staining \ntechnique",
+                      "cell texture and morphology profiling":'Cell texture \n&  morphology\nprofiling',
+                       'Cell/organism/structure type identification':'Biological\nentity\nclassification',
+                       'Cell cycle and stage identification':'Cell cycle \n& stage\n classification',
+                       'Distinguish normal vs. abnormal': 'Normal \nvs.\n abnormal',
+                       'Single molecule imaging':  'Single molecule\n imaging',
+                       'Interpretation of neoplastic histopathology': 'Interpretation of\nneoplastic histopathology',
+                       'Interpretation of non-neoplastic histopathology': 'Interpretation of\nnon-neoplastic histopathology', 
+
+                       'Pap smear grading (BF)':'Pap smear\ngrading\n(PAP)',
+                       'Colorectal tissue [a] (BF)':'Colorectal tissue\n[a] (H&E)',
+                       'Colorectal tissue [b] (BF)':'Colorectal tissue\n[b] (H&E)',
+                       'Colorectal tissue [c] (BF)':'Colorectal tissue\n[c] (H&E)',
+                       'Clinical chronic heart failure (BF)': 'Clinical\nchronic\nheart failure \n(H&E)',
+                       'Amyloid morphology [a] (BF)':  'Amyloid morphology\n [a] (IHC)',
+                       'Amyloid morphology [b] (BF)':  'Amyloid morphology\n [b] (IHC)'
+                       }
+    for i in range(0,len(categories)):
+        if categories[i] in better_lengends.keys():
+            categories[i] = better_lengends[categories[i]]
+
     ax.set_thetagrids(angles * 180 / np.pi, labels=categories, rotation=45, fontsize=10)
 
     # Set the title and legend
@@ -144,51 +172,65 @@ def radial_plot_from_df(
 
 
 if __name__ == "__main__":
+ 
 
-    #model_order = ["ALIGN","BLIP","OpenCLIP","BioMedCLIP","ConchCLIP","QuiltCLIP","PLIP"]
-    model_order                   = ["ALIGN","BioMedCLIP","CogVLM","Random_model"]
-    axis_to_remove_list:list[str] = ["dataset_total","classification"]
-    order_axis_list:list[str]     = ["submodality","modality","domain","subdomain","stain"]
-    csv_data                      = "outputs/tables/eval.csv"
-    output_path                   = "outputs/tables/eval"
-    df_pi = pd.read_csv(csv_data)
-    #radial_plot_from_df(df_pi, output_path, axis_to_remove_list, order_axis_list,model_order=model_order)
+    MODELS = ["GptApi","ALIGN","BioMedCLIP","ConchCLIP"],["GptApi","BioMedCLIP","ConchCLIP","QuiltCLIP","PLIP"]
+    for model in MODELS:
+        #import pdb;pdb.set_trace()
+        name_ = "_".join(model)
+        model_order                   = model
+        axis_to_remove_list:list[str] = ["dataset_total","classification"]
+        order_axis_list:list[str]     = ["submodality","modality","domain","subdomain","stain"]
+        csv_data                      = "outputs/tables/eval.csv"
+        output_path                   = f"outputs/tables/eval_{name_}"
+        df_pi = pd.read_csv(csv_data)
+        radial_plot_from_df(df_pi, output_path, axis_to_remove_list, order_axis_list,model_order=model_order)
 
-    groups = get_tasks_by_taxonomy(tasks_metadata)
-    #import pdb;pdb.set_trace()
-    order = groups['cell texture and morphology profiling'] \
-          + groups['Cell/organism/structure type identification'] \
-          + groups['Cell cycle and stage identification'] \
-          +  groups['Distinguish normal vs. abnormal'] \
-          + groups['Single molecule imaging']  \
-          + groups['Single molecule imaging']  \
-          + groups['Interpretation of neoplastic histopathology'] \
-          +groups['Interpretation of non-neoplastic histopathology']
+        model_order                   = model
+        axis_to_remove_list:list[str] = ["dataset_total","classification"]
+        order_axis_list:list[str]     = ["submodality","modality","domain","subdomain","stain"]
+        csv_data                      = "outputs/tables/eval_pathology.csv"
+        output_path                   = f"outputs/tables/eval_path_{name_}"
+        df_pi = pd.read_csv(csv_data)
+        radial_plot_from_df(df_pi, output_path, axis_to_remove_list, order_axis_list,model_order=model_order)
+
+        
+    
+        groups = get_tasks_by_taxonomy(tasks_metadata)
+        #import pdb;pdb.set_trace()
+        order = groups['cell texture and morphology profiling'] \
+            + groups['Cell/organism/structure type identification'] \
+            + groups['Cell cycle and stage identification'] \
+            +  groups['Distinguish normal vs. abnormal'] \
+            + groups['Single molecule imaging']  \
+            + groups['Interpretation of neoplastic histopathology'] \
+            +groups['Interpretation of non-neoplastic histopathology']
 
 
-    model_order                   = ["ALIGN","BioMedCLIP","ConchCLIP","CogVLM"] #"Random_model"]
-    axis_to_remove_list:list[str] = ["dataset_total","classification"]
-    order_axis_list:list[str]     = order
-    csv_data                      = "outputs/tables/evalclassification_1.csv"
-    output_path                   = "outputs/tables/classification_bio"
-    df_pc = pd.read_csv(csv_data)
-    df_pc.drop(['level_0'], axis = 1, inplace = True) 
-    #import pdb;pdb.set_trace()
-    radial_plot_from_df(df_pc, output_path, axis_to_remove_list, order_axis_list,model_order=model_order,transpose=False,groups=groups)
-    print("Done")
-    #model_order                   = ["ALIGN","BioMedCLIP","CogVLM","Random_model"]
-    #axis_to_remove_list:list[str] = ["dataset_total","classification",'level_0']
-    #order_axis_list:list[str]     = None
-    #output_path                   = "outputs/tables/classification_instance"
-    #df_pc = pd.read_csv(csv_data)
-    #merged_df = pd.merge(df_pi, df_pc, on='model', how='outer')
-    #df_pc.drop(['level_0'], axis = 1, inplace = True) 
-    #import pdb;pdb.set_trace()
-    #radial_plot_from_df(merged_df, output_path, axis_to_remove_list, order_axis_list,model_order=model_order,transpose=False)
-    #import pdb;pdb.set_trace()
-
-    #axis_to_remove_list:list[str] = None
-    #order_axis_list:list[str]     = None
-    ##csv_data    = "outputs/tables/evalclassification.csv"
-    #output_path = "outputs/tables/evalclassification"
-    #radial_plot_from_df(csv_data, output_path, axis_to_remove_list, order_axis_list,model_order=model_order,transpose=False)
+        model_order                   = model
+        axis_to_remove_list:list[str] = ["dataset_total","classification"]
+        order_axis_list:list[str]     = order
+        csv_data                      = "outputs/tables/evalclassification_1.csv"
+        output_path                   = f"outputs/tables/classification_{name_}"
+        df_pc = pd.read_csv(csv_data)
+        df_pc.drop(['level_0'], axis = 1, inplace = True) 
+        #import pdb;pdb.set_trace()
+        radial_plot_from_df(df_pc, output_path, axis_to_remove_list, order_axis_list,model_order=model_order,transpose=False,groups=groups)
+        
+        order = groups['Interpretation of neoplastic histopathology'] \
+            +groups['Interpretation of non-neoplastic histopathology']
+        #import pdb;pdb.set_trace()
+        model_order                   = model
+        axis_to_remove_list:list[str] = ["dataset_total","classification"]
+        order_axis_list:list[str]     = order
+        csv_data                      = "outputs/tables/evalclassification_1.csv"
+        output_path                   = f"outputs/tables/classification_path_{name_}"
+        df_pc = pd.read_csv(csv_data)
+        df_pc.drop(['level_0'], axis = 1, inplace = True) 
+        #import pdb;pdb.set_trace()
+        radial_plot_from_df(df_pc, output_path, axis_to_remove_list, order_axis_list,model_order=model_order,transpose=False)
+        
+        
+        print("Done")
+        
+        

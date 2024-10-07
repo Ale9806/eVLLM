@@ -7,6 +7,7 @@ import json
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import pandas as pd
+import string
 tasks_metadata = {
     'acevedo_et_al_2020': {
         'task_name': 'White blood cell',
@@ -79,7 +80,7 @@ tasks_metadata = {
         'taxonomy': 'Cell cycle and stage identification'
     },
     'held_et_al_2010_h2b': {
-        'task_name': 'Cell cycle phase with chromatin marker',
+        'task_name': 'Cell cycle (Chromatin)',
         'synthetic': False,
         'num_classes': 9,
         'submodality': 'EF',
@@ -93,7 +94,7 @@ tasks_metadata = {
         'taxonomy': 'Cell cycle and stage identification'
     },
     'hussain_et_al_2019': {
-        'task_name': 'Pre-cancerous and cervical cancer lesions',
+        'task_name': 'Pap smear grading',
         'synthetic': False,
         'num_classes': 4,
         'submodality': 'BF',
@@ -114,63 +115,63 @@ tasks_metadata = {
         'taxonomy': 'Cell/organism/structure type identification'
     },
     'kather_et_al_2016': {
-        'task_name': 'colorectal cancer texture [a]',
+        'task_name': 'Colorectal tissue [a]',
         'synthetic': False,
         'num_classes': 8,
         'submodality': 'BF',
         'taxonomy': 'Interpretation of neoplastic histopathology'
     },
     'kather_et_al_2018': {
-        'task_name': 'colorectal cancer texture [b]',
+        'task_name': 'Colorectal tissue [b]',
         'synthetic': False,
         'num_classes': 8,
         'submodality': 'BF',
         'taxonomy': 'Interpretation of neoplastic histopathology'
     },
     'kather_et_al_2018_val7k': {
-        'task_name': 'colorectal cancer texture [c]',
+        'task_name': 'Colorectal tissue [c]',
         'synthetic': False,
         'num_classes': 8,
         'submodality': 'BF',
         'taxonomy': 'Interpretation of neoplastic histopathology'
     },
     'nirschl_et_al_2018': {
-        'task_name': 'clinical chronic heart failure',
+        'task_name': 'Clinical chronic heart failure',
         'synthetic': False,
         'num_classes': 2,
         'submodality': 'BF',
         'taxonomy': 'Interpretation of non-neoplastic histopathology'
     },
     'nirschl_unpub_fluorescence': {
-        'task_name': 'organisms and labeled structure',
+        'task_name': 'Fluorescent Organisms/Structurese',
         'synthetic': False,
         'num_classes': 13,
         'submodality': 'TIRF',
         'taxonomy': 'Cell/organism/structure type identification'
     },
     'tang_et_al_2019': {
-        'task_name': 'amyloid beta patterns [a]',
+        'task_name': 'Amyloid morphology [a]',
         'synthetic': False,
         'num_classes': 4,
         'submodality': 'BF',
         'taxonomy': 'Interpretation of non-neoplastic histopathology'
     },
     'wong_et_al_2022': {
-        'task_name': 'amyloid beta patterns [b]',
+        'task_name': 'Amyloid morphology [b]',
         'synthetic': False,
         'num_classes': 4,
         'submodality': 'BF',
         'taxonomy': 'Interpretation of non-neoplastic histopathology'
     },
     'wu_et_al_2023': {
-        'task_name': 'Mitochondrial morphology in electron microscopy',
+        'task_name': 'Mitochondrial morphology',
         'synthetic': False,
         'num_classes': 2,
         'submodality': 'CET',
         'taxonomy': 'Distinguish normal vs. abnormal'
     }
 }
-CLIP_MODELS:list[str] = ["ALIGN","CLIP","BLIP","OpenCLIP","QuiltCLIP","OwlVIT2","PLIP","BioMedCLIP","ConchCLIP","Random_model"]
+CLIP_MODELS:list[str] = ["OpenCLIP_lion","QuiltCLIPRobust","PLIPRobust","ALIGN","CLIP","BLIP","OpenCLIP","QuiltCLIP","OwlVIT2","PLIP","BioMedCLIP","ConchCLIP","Random_model"]
 
 
 def get_model_colors(verion=0):
@@ -178,9 +179,11 @@ def get_model_colors(verion=0):
         tab20_colors = plt.get_cmap('tab20').colors
         model_colors = {
             ## autoregressive generalist
-            'CogVLM':"blue",
+            'CogVLM':"green",
             'QwenVLM':"red",
             'PaliGemma':"orange",
+            "GptApi":"blue",
+            "GPT-4o":"blue",
             
             ## contrastive generalist
             'ALIGN': tab20_colors[6],
@@ -190,9 +193,11 @@ def get_model_colors(verion=0):
         
             ## specialist 
             'BioMedCLIP': 'mediumpurple',
+            'BiomedCLIP': 'mediumpurple',
             'QuiltCLIP': '#FFB6C1',
             'PLIP': '#FF69B4',
             'ConchCLIP': '#DDA0DD',
+            'Conch': '#DDA0DD',
             
             ## random
             "Random":"gray",
@@ -356,31 +361,59 @@ def construct_filter_name(filenmae:str,filter_dict:dict[str,list[str]]) -> str:
     return filename
 
 
-def replace_nan(df):
-    df["model_answers"] = df["model_answers"].str.replace("nan","np.nan")
+def replace_nan(df,with_zero=False):
+    if with_zero:
+        df["model_answers"] = df["model_answers"].str.replace("nan","0")
+    else:
+        df["model_answers"] = df["model_answers"].str.replace("nan","np.nan")
   
 
-def get_results(df:pd.DataFrame, model:str) -> None:
+def get_results(df:pd.DataFrame, model:str,prompt_type="caption") -> None:
     if model not in CLIP_MODELS:
         replace_nan(df)
+        #try:
+       # import pdb;pdb.set_trace()
         df["prediction"] = df.apply(lambda row: eval(row["model_answers"])["text"], axis=1)
         df['is_correct'] = df.apply(check_prediction, axis=1)
 
-
     else: 
+        #import pdb;pdb.set_trace()
         df["prediction"] = df.apply(lambda row: eval(row["model_answers"])["pred"][0] , axis=1)
         if model == "Random_model":
-            df["is_correct"] = 1*(df["correct_answer"] == df["prediction"])
+            if prompt_type == "question":
+                df['is_correct'] = 1*df.apply(lambda row: row.correct_answer in row.prediction, axis=1)
+            else:
+                df["is_correct"] = 1*(df["correct_answer"] == df["prediction"])
             
         else:
             df["is_correct"] = 1*(df["correct_idx"] == df["prediction"])
+            
     
 
 
 def get_confidence(row):
-    probs = ast.literal_eval(row['model_answers'])['probs'][0]
-    predicted_class = ast.literal_eval(row['model_answers'])['pred'][0]
-    return probs[predicted_class]
+
+    #import pdb;pdb.set_trace()
+    
+    # Embedding models API
+    if row["model"] in CLIP_MODELS or row["model"] in ["OpenCLIP_lion"]:
+        #import pdb;pdb.set_trace()
+        probs                 = ast.literal_eval(row['model_answers'])['probs'][0]
+        pred                  = ast.literal_eval(row['model_answers'])['pred'][0]
+        correct_idx           = row["correct_idx"]
+        prob_at_correct_class = probs[correct_idx]
+
+
+    # Auto Regressive models API
+    else:
+        correct_idx     = row["correct_idx"]
+        correct_letter  = string.ascii_uppercase[correct_idx]
+        prob_at_correct_class = ast.literal_eval(row["model_answers"])['probs_choices'][correct_letter]
+        import pdb;pdb.set_trace()
+        df["is_correct"] 
+        
+
+    return prob_at_correct_class
 
 
 
